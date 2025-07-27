@@ -27,19 +27,15 @@ git clone --depth=1 -b main https://github.com/sleepy-project/sleepy.git
 2. 安装依赖
 
 ```shell
-# 安装稳定依赖
-pip install -r requirements-lock.txt
+pip install -r pyproject.toml
 ```
 
-也可以使用虚拟环境安装:
+> 推荐使用 `uv` 管理环境:
 
 ```shell
-# 适用于非 Windows 系统 / Git Bash
-./env.sh create # 创建虚拟环境
-./env.sh install-locked # 安装稳定依赖
+uv sync
 ```
 
-> *开发建议安装最新依赖: `pip install -r requirements.txt`*
 
 3. 编辑配置文件
 
@@ -62,7 +58,7 @@ pip install -r requirements-lock.txt
 
 ```shell
 # 直接启动
-python3 server.py
+python3 main.py
 # 简易启动器
 python3 start.py
 ```
@@ -125,7 +121,7 @@ python3 start.py
 
 ![huggingface-3](https://ghimg.siiway.top/sleepy/deploy/huggingface-3.1.png)
 
-2. 编辑 Space 的 `Dockerfile`，将底部的 `CMD python3 server.py` 删除，并添加:
+2. 编辑 Space 的 `Dockerfile`，将底部的 `CMD python3 main.py` 删除，并添加:
 
 ```dockerfile
 # Install wget
@@ -140,7 +136,7 @@ CMD bash cfd.sh
 
 3. 新建两个环境变量 (`Settings` -> `Variables and secrets`):
 
-- `CFD_COMMAND` *(`Variable`)*: `python3 server.py`
+- `CFD_COMMAND` *(`Variable`)*: `python3 main.py`
 - `CFD_TOKEN`: 你的 Cloudflare Tunnel 密钥
 
 设置完成后如图:

@@ -423,7 +423,7 @@ sleepy_page_zhixue = true
 
 ### 使用
 
-需要将本脚本放在服务器的 `server.py` 同级目录运行，或编辑 L195-L197:
+需要将本脚本放在服务器的 `main.py` 同级目录运行，或编辑 L195-L197:
 
 https://github.com/sleepy-project/sleepy/blob/73a5e3507c1ca0454bc39c685541d53d228df41f/client/zhixue.py#L195-L197
 

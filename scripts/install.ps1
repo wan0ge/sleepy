@@ -186,7 +186,7 @@ function Show-CompletionMessage {
     Write-Success "Sleepy has been successfully installed!"
     Write-Host ""
     Write-Host "To start the server:" -ForegroundColor White
-    Write-Host "  python server.py"
+    Write-Host "  python main.py"
     Write-Host ""
     Write-Host "For automatic restart on crash:" -ForegroundColor White
     Write-Host "  python start.py"
@@ -209,7 +209,7 @@ function Start-Installation {
     Write-Host ""
     
     # Check if we're in the right directory
-    if (-not (Test-Path "server.py") -or -not (Test-Path "requirements.txt")) {
+    if (-not (Test-Path "main.py") -or -not (Test-Path "requirements.txt")) {
         Write-Error "This script must be run from the Sleepy project root directory."
         exit 1
     }

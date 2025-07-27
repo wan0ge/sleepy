@@ -219,7 +219,7 @@ After=network.target
 Type=simple
 User=${CURRENT_USER}
 WorkingDirectory=${CURRENT_DIR}
-ExecStart=$(which python3) ${CURRENT_DIR}/server.py
+ExecStart=$(which python3) ${CURRENT_DIR}/main.py
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -312,7 +312,7 @@ display_completion() {
     print_success "Sleepy has been successfully installed!"
     echo
     echo -e "${BOLD}To start the server:${NC}"
-    echo "  python3 server.py"
+    echo "  python3 main.py"
     echo
     echo -e "${BOLD}For automatic restart on crash:${NC}"
     echo "  python3 start.py"
@@ -527,7 +527,7 @@ main() {
     fi
 
     # Check if we're in the Sleepy directory
-    if [ ! -f "server.py" ] || [ ! -f "requirements.txt" ]; then
+    if [ ! -f "main.py" ] || [ ! -f "requirements.txt" ]; then
         print_message "Not in Sleepy project directory. Will clone the repository." "$YELLOW"
         # We're not in the Sleepy directory, need to clone the repo
         clone_repository
