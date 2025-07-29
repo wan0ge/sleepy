@@ -41,7 +41,7 @@ class CustomFormatter(Formatter):
     default_symbol = '📢'
     colorful: bool
 
-    def __init__(self, colorful: bool = True, timezone: str = 'UTC'):
+    def __init__(self, colorful: bool = True, timezone: str | None = None):
         super().__init__()
         if colorful:
             self.replaces = self.replaces_colorful
@@ -52,7 +52,7 @@ class CustomFormatter(Formatter):
         self.timezone = timezone
 
     def format(self, record):
-        timestamp = datetime.now(pytz.timezone(self.timezone)).strftime('[%Y-%m-%d %H:%M:%S]')  # 格式化时间
+        timestamp = (datetime.now(pytz.timezone(self.timezone)) if self.timezone else datetime.now()).strftime('[%Y-%m-%d %H:%M:%S]')  # 格式化时间
         symbol = f' {self.symbols.get(record.levelname, self.default_symbol)}'  # 表情符号
         level = self.replaces.get(record.levelname, f'[{record.levelname}]')  # 日志等级
         file = relative_path(record.pathname)  # 源文件名

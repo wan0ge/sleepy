@@ -36,7 +36,7 @@ try:
     from config import Config as config_init
     import utils as u
     from data import Data as data_init
-    from plugin import PluginInit as plugin_init
+    import plugin as pl
     from models import redirect_map
 except:
     print(f'''
@@ -117,7 +117,7 @@ try:
         l.info('[metrics] metrics enabled, open /api/metrics to see the count.')
 
     # init plugin
-    p = plugin_init(
+    p = pl.PluginInit(
         config=c,
         data=d,
         app=app
@@ -539,15 +539,18 @@ def set_status():
         status = int(status)
     except:
         raise u.APIUnsuccessful(400, 'argument \'status\' must be int')
-    # old_status = d1.status
-    d.status_id = status
+    old_status = d.status_id
 
-    # 触发状态更新事件
-    # trigger_event('status_updated', old_status, status)
+    evt = p.trigger_event(pl.StatusUpdatedEvent(old_status=old_status, new_status=status), flask.request)
+
+    if evt.intercepted:
+        return evt.interception
+    else:
+        d.status_id = evt.new_status
 
     return {
         'success': True,
-        'set_to': status
+        'set_to': evt.new_status
     }
 
 
@@ -895,9 +898,9 @@ def serve_public(path_name: str):
 
 # region end
 
+p.trigger_event(pl.AppStartedEvent())
 
 if __name__ == '__main__':
-    # trigger_event('app_started')
     l.info(f'Hi {c.page.name}!')
     l.info(f'Listening service on: {f"[{c.main.host}]" if ":" in c.main.host else c.main.host}:{c.main.port}{" (debug enabled)" if c.main.debug else ""}')
     try:
@@ -910,10 +913,13 @@ if __name__ == '__main__':
         )
     except Exception as e:
         l.critical(f'Critical error when running server: {e}\n{format_exc()}')
-        exit(1)
+        exitcode = 1
     else:
         print()
         l.info('Bye.')
-        exit(0)
+        exitcode = 0
+    finally:
+        p.trigger_event(pl.AppStoppedEvent(exitcode))
+        exit(exitcode)
 
 # endregion end

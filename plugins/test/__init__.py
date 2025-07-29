@@ -86,7 +86,7 @@ def testcard():
 @p.index_inject()
 @p.panel_inject()
 def index_inject_1():
-    return f'<script>alert(\'views today: {p.global_data.metric_data_index[0]}\')</script>'
+    return f'<script>console.log(\'views today: {p.global_data.metric_data_index[0]}\')</script>'
 # p.add_panel_inject('<script>alert(\'panel inject test ok\')</script>')
 
 

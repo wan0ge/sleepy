@@ -5,6 +5,8 @@ from logging import getLogger
 from functools import wraps
 from contextlib import contextmanager
 from traceback import format_exc
+from collections import defaultdict
+from datetime import datetime
 
 import flask
 
@@ -16,36 +18,152 @@ l = getLogger(__name__)
 
 # region plugin-events
 
-# TODO undone
 
-# class BaseEvent:
-#     '''
-#     事件基类
-#     '''
-#     id: str
+class BaseEvent:
+    '''
+    事件基类
+    '''
+    id: str
+    '''事件 id'''
+    time: datetime = datetime.now()
+    '''事件生成时间'''
+
+    cancelable: bool = True
+    '''事件是否可取消'''
+    interceptable: bool = True
+    '''事件是否可拦截'''
+
+    canceled: bool = False
+    '''事件是否被取消 (取消后不会传递给处理函数, 如前后状态一样时事件无效)'''
+    intercepted: bool = False
+    '''事件是否被拦截'''
+    interception: t.Any = None
+    '''拦截后返回结果'''
+    request: flask.Request | None = None
+    '''触发事件的请求 (如有)'''
+
+    def __init__(self):
+        pass
+
+    def cancel(self):
+        '''
+        取消事件 (如果可取消)
+        '''
+        if self.cancelable:
+            self.canceled = True
+
+    def intercept(self, response: t.Any):
+        '''
+        中断事件, 并提前返回 (如果可中断)
+        '''
+        if self.interceptable:
+            self.intercepted = True
+            self.interception = response
 
 
-# class AppStartedEvent(BaseEvent):
-#     '''
-#     应用启动事件
-#     '''
-#     id = 'app_started'
+class AppStartedEvent(BaseEvent):
+    '''
+    应用启动事件
+    '''
+    id = 'app_started'
+    cancelable = False
+    interceptable = False
 
-#     def __init__(self):
-#         pass
+
+class AppStoppedEvent(BaseEvent):
+    '''
+    应用停止事件
+    '''
+    id = 'app_stopped'
+    cancelable = False
+    interceptable = False
+
+    def __init__(self, exitcode: int):
+        self.exitcode = exitcode
 
 
-# class StatusUpdatedEvent(BaseEvent):
-#     '''
-#     手动状态更新事件
-#     '''
-#     id = 'status_updated'
+class StatusUpdatedEvent(BaseEvent):
+    '''
+    手动状态更新事件
+    '''
+    id = 'status_updated'
+    cancelable = True
+    interceptable = True
 
-#     def __init__(self, old_status, new_status):
-#         self.old_status = old_status
-#         self.new_status = new_status
+    def __init__(self, old_status: int, new_status: int):
+        '''
+        :param old_status: 旧状态
+        :param new_status: 新状态
+        '''
+        if old_status == new_status:
+            self.canceled = True
+        self.old_status = old_status
+        self.new_status = new_status
 
-# class 
+
+class DeviceSetEvent(BaseEvent):
+    '''
+    设备状态更新事件
+    '''
+    id = 'device_set'
+
+    def __init__(self, device_id: str, show_name: str, using: bool | None, status: str, fields: dict[str, t.Any]):
+        '''
+        :param device_id: 设备 id
+        :param show_name: 设备前台显示名称
+        :param using: 设备是否在使用
+        :param status: 设备状态
+        '''
+        self.device_id = device_id
+        self.show_name = show_name
+        self.using = using
+        self.status = status
+        self.fields = fields
+
+
+class DeviceRemovedEvent(BaseEvent):
+    '''
+    设备移除事件
+    '''
+    id = 'device_removed'
+
+    def __init__(self, device_id: str, device_show_name: str, device_using: bool, device_status: str, device_fields: dict[str, t.Any]):
+        '''
+        :param device_id: 设备 id
+        :param show_name: 设备前台显示名称
+        :param using: 设备是否在使用
+        :param status: 设备状态
+        '''
+        self.device_id = device_id
+        self.device_show_name = device_show_name
+        self.device_using = device_using
+        self.device_status = device_status
+        self.device_fields = device_fields
+
+
+class DeviceClearedEvent(BaseEvent):
+    '''
+    设备清除事件
+    '''
+    id = 'device_cleared'
+
+
+class PrivateModeChangedEvent(BaseEvent):
+    '''
+    隐私模式切换事件
+    '''
+    id = 'private_mode_changed'
+
+    def __init__(self, old_status: bool, new_status: bool):
+        '''
+        :param old_status: 旧状态
+        :param new_status: 新状态
+        '''
+        if old_status == new_status:
+            self.canceled = True
+        self.old_status = old_status
+        self.new_status = new_status
+
 
 # endregion plugin-events
 
@@ -63,8 +181,6 @@ class Plugin:
     '''插件配置 (如传入 Model 则为对应 Model 实例, 否则为字典)'''
     _registry: dict[str, t.Any] = {}
     '''存放插件实例'''
-    _routes = []
-    '''插件注册的路由'''
 
     def __init__(self, name: str, config: t.Any = {}, data: dict = {}):
         '''
@@ -171,12 +287,12 @@ class Plugin:
         endpoint = options.pop('endpoint', func.__name__)
         full_rule = f'/plugin/{self.name}{"" if rule.startswith("/") else "/"}{rule}'
 
-        self._routes.append({
-            'rule': full_rule,
-            'endpoint': f"plugin.{self.name}.{endpoint}",
-            'view_func': _wrapper or func,
-            'options': options
-        })
+        PluginInit.instance._register_route(
+            rule=full_rule,
+            endpoint=f'plugin.{self.name}.{endpoint}',
+            view_func=_wrapper or func,
+            options=options
+        )
 
     def route(self, rule: str, **options: t.Any):
         '''
@@ -216,12 +332,12 @@ class Plugin:
         endpoint = options.pop('endpoint', func.__name__)
         full_rule = f'{"" if rule.startswith("/") else "/"}{rule}'
 
-        self._routes.append({
-            'rule': full_rule,
-            'endpoint': f"plugin_global.{self.name}.{endpoint}",
-            'view_func': _wrapper or func,
-            'options': options
-        })
+        PluginInit.instance._register_route(
+            rule=full_rule,
+            endpoint=f'plugin_global.{self.name}.{endpoint}',
+            view_func=_wrapper or func,
+            options=options
+        )
 
     def global_route(self, rule: str, **options: t.Any):
         '''
@@ -260,9 +376,7 @@ class Plugin:
         :param card_id: 用于区分不同卡片
         :param content: 卡片 HTML 内容
         '''
-        stored = PluginInit.instance.index_cards.get(card_id, [])
-        stored.append(content)
-        PluginInit.instance.index_cards[card_id] = stored
+        PluginInit.instance.index_cards[card_id].append(content)
 
     def index_card(self, card_id: str):
         '''
@@ -363,6 +477,30 @@ class Plugin:
 
     # endregion plugin-api-injects
 
+    def register_event(self, event: type[BaseEvent], handler: t.Callable):
+        '''
+        注册事件处理器
+
+        :param event: 要注册的事件对象
+        :param handler: 处理函数
+        '''
+        PluginInit.instance.events[event.id].append(handler)
+
+    def event_handler(self, event: type[BaseEvent]):
+        '''
+        [装饰器] 注册事件处理器
+
+        :param event: 要注册的事件对象
+        '''
+        def decorator(f):
+            @wraps(f)
+            def wrapper(*args, **kwargs):
+                return f(*args, **kwargs)
+
+            self.register_event(event=event, handler=wrapper)
+            return wrapper
+        return decorator
+
     def init(self):
         '''
         初始化时将执行此函数 (可覆盖)
@@ -382,9 +520,7 @@ class PluginInit:
     app: flask.Flask
     plugins_loaded: list[Plugin] = []
     '''已加载的插件'''
-    _routes = []
-    '''插件注册的路由'''
-    index_cards: dict[str, list[str | t.Callable]] = {}
+    index_cards: defaultdict[str, list[str | t.Callable]] = defaultdict(list)
     '''主页卡片'''
     index_injects: list[str | t.Callable] = []
     '''主页注入'''
@@ -392,7 +528,8 @@ class PluginInit:
     '''管理面板卡片'''
     panel_injects: list[str | t.Callable] = []
     '''管理面板注入'''
-    # events: dict[]
+    events: defaultdict[str, list[t.Callable]] = defaultdict(list)
+    '''事件注册表'''
 
     def __init__(self, config: ConfigModel, data: Data, app: flask.Flask):
         self.c = config
@@ -409,7 +546,7 @@ class PluginInit:
             try:
                 if not os.path.isfile(u.get_path(f'plugins/{plugin_name}/__init__.py')):
                     l.warning(f'[plugin] Invaild plugin {plugin_name}! it doesn\'t exist!')
-                    break
+                    continue
 
                 perf = u.perf_counter()
                 module = importlib.import_module(f'plugins.{plugin_name}')
@@ -419,7 +556,7 @@ class PluginInit:
                     obj = getattr(module, attr)
                     if isinstance(obj, Plugin) and obj.name == plugin_name:
                         obj.init()
-                        self._register_routes(obj)
+                        # self._register_routes(obj)
                         self.plugins_loaded.append(obj)
                         l.debug(f'[plugin] init plugin {plugin_name} took {perf()}ms')
                         break
@@ -434,19 +571,30 @@ class PluginInit:
         l.info(f'{loaded_count} plugin{"s" if loaded_count > 1 else ""} enabled: {loaded_names}' if loaded_count > 0 else f'No plugins enabled.')
         l.debug(f'index cards: {self.index_cards}')
 
-    def _register_routes(self, plugin: Plugin):
+    def _register_route(self, rule: str, endpoint: str, view_func: t.Callable, options: dict[str, t.Any]):
         '''
-        注册插件所有路由
+        注册路由
+        '''
+        self.app.add_url_rule(
+            rule,
+            endpoint=endpoint,
+            view_func=view_func,
+            **options
+        )
+        l.debug(f'Registered Route: {rule} -> {endpoint}')
 
-        :param plugin: 插件接口实例
+    def trigger_event(self, event, request: flask.Request | None = None):
         '''
-        for route in plugin._routes:
-            self.app.add_url_rule(
-                route['rule'],
-                endpoint=route['endpoint'],
-                view_func=route['view_func'],
-                **route['options']
-            )
-            l.debug(f'Registered Route: {route["rule"]} -> {route["endpoint"]}')
+        触发事件
+
+        :param event: 事件实例 (不可只使用 id)
+        :param request: 触发事件的请求
+        '''
+        for e in self.events[event.id]:
+            try:
+                event = e(event=event, request=request)
+            except Exception as err:
+                l.warning(f'[plugin] Error when trigging event {event.id} with function {e}: {err}\n{format_exc()}')
+        return event
 
 # endregion plugin-init
