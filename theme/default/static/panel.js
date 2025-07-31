@@ -223,12 +223,12 @@ async function fetchMetrics() {
         container.innerHTML = '';
 
         // 今日访问
-        if (data.today) {
-            if (data.today['/']) {
-                addMetricCard(container, '今日首页访问量', data.today['/'] || 0);
+        if (data.daily) {
+            if (data.daily['/']) {
+                addMetricCard(container, '今日首页访问量', data.daily['/'] || 0);
             }
             let apiCalls = 0;
-            for (const [path, count] of Object.entries(data.today)) {
+            for (const [path, count] of Object.entries(data.daily)) {
                 if (path.startsWith('/') && path !== '/') {
                     apiCalls += count;
                 }
@@ -236,13 +236,27 @@ async function fetchMetrics() {
             addMetricCard(container, '今日 API 调用次数', apiCalls);
         }
 
-        // 本月访问
-        if (data.month) {
-            if (data.month['/']) {
-                addMetricCard(container, '本月首页访问量', data.month['/'] || 0);
+        // 本周访问
+        if (data.weekly) {
+            if (data.weekly['/']) {
+                addMetricCard(container, '本周首页访问量', data.weekly['/'] || 0);
             }
             let apiCalls = 0;
-            for (const [path, count] of Object.entries(data.month)) {
+            for (const [path, count] of Object.entries(data.weekly)) {
+                if (path.startsWith('/') && path !== '/') {
+                    apiCalls += count;
+                }
+            }
+            addMetricCard(container, '本周 API 调用次数', apiCalls);
+        }
+
+        // 本月访问
+        if (data.monthly) {
+            if (data.monthly['/']) {
+                addMetricCard(container, '本月首页访问量', data.monthly['/'] || 0);
+            }
+            let apiCalls = 0;
+            for (const [path, count] of Object.entries(data.monthly)) {
                 if (path.startsWith('/') && path !== '/') {
                     apiCalls += count;
                 }
@@ -251,12 +265,12 @@ async function fetchMetrics() {
         }
 
         // 本年访问
-        if (data.year) {
-            if (data.year['/']) {
-                addMetricCard(container, '本年首页访问量', data.year['/'] || 0);
+        if (data.yearly) {
+            if (data.yearly['/']) {
+                addMetricCard(container, '本年首页访问量', data.yearly['/'] || 0);
             }
             let apiCalls = 0;
-            for (const [path, count] of Object.entries(data.year)) {
+            for (const [path, count] of Object.entries(data.yearly)) {
                 if (path.startsWith('/') && path !== '/') {
                     apiCalls += count;
                 }

@@ -46,7 +46,7 @@ function updateDeviceStatus(devices) {
 
     let deviceList = '';
     for (const [deviceId, device] of Object.entries(devices)) {
-        deviceList += `${escapeHtml(device.show_name)}: ${device.using ? '使用中' : '未使用'} - ${escapeHtml(device.status || '...')}<br/>\n`;
+        deviceList += `${escapeHtml(device.show_name)}: ${device.using ? '使用中' : '未使用'} - ${escapeHtml(device.status || '...')} - ${getFormattedTime(new Date(device.last_updated * 1000))}<br/>\n`;
     }
 
     deviceStatusElement.innerHTML = deviceList.trim();

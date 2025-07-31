@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from logging import Formatter, getLogger, DEBUG
 from functools import wraps
+from typing import Any
 
 import flask
 from colorama import Fore, Style
@@ -392,7 +393,7 @@ def perf_counter():
     return lambda: round((time.perf_counter() - start)*1000, 2)
 
 
-def process_env_split(keys: list[str], value: str) -> dict:
+def process_env_split(keys: list[str], value: Any) -> dict:
     '''
     处理环境变量配置项分割
     - `page_name=wyf9` -> `['page', 'name'], 'wyf9'` -> `{'page': {'name': 'wyf9'}, 'page_name': 'wyf9'}`

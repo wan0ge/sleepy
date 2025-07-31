@@ -5,10 +5,10 @@ from logging import getLogger
 from dotenv import load_dotenv
 from yaml import safe_load as yaml_load
 from toml import load as toml_load
-from json import load as json_load
+from json import load as json_load, loads as json_loads, JSONDecodeError
 
 import utils as u
-from models import ConfigModel
+from models import ConfigModel, env_vaildate_json_keys
 from pydantic import ValidationError
 
 l = getLogger(__name__)
@@ -36,6 +36,11 @@ class Config:
                     vaild_kvs[k[7:]] = v
             # 生成字典
             for k, v in vaild_kvs.items():
+                if k in env_vaildate_json_keys:
+                    try:
+                        v = json_loads(v)
+                    except JSONDecodeError:
+                        pass
                 klst = k.split('_')
                 config_env = u.deep_merge_dict(config_env, u.process_env_split(klst, v))
         except Exception as e:

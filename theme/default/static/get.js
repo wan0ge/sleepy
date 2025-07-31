@@ -34,7 +34,7 @@ function updateDeviceStatus(data) {
         if (device.using) {
             const jsShowName = escapeJs(device.show_name);
             const jsAppName = escapeJs(device.status || '...');
-            const jsCode = `alert('${jsShowName}: \\n${jsAppName}')`;
+            const jsCode = `alert('${jsShowName}: \\n${jsAppName}\\n${getFormattedTime(new Date(device.last_updated * 1000))}')`;
             const escapedJsCode = escapeHtml(jsCode);
 
             device_status = `

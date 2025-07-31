@@ -23,7 +23,6 @@
 set SLEEPY_MAIN_HOST=0.0.0.0
 set SLEEPY_MAIN_PORT=9010
 set SLEEPY_MAIN_DEBUG=false
-:: [无法定义列表 / 字典]
 ```
 
 ```bash
@@ -31,7 +30,6 @@ set SLEEPY_MAIN_DEBUG=false
 export sleepy_main_host=0.0.0.0
 export sleepy_main_port=9010
 export sleepy_main_debug=false
-# [无法定义列表 / 字典]
 ```
 
 ### `data/.env`
@@ -40,7 +38,6 @@ export sleepy_main_debug=false
 sleepy_main_host = "0.0.0.0"
 sleepy_main_port = 9010
 sleepy_main_debug = false
-# [无法定义列表 / 字典]
 ```
 
 ### `data/config.yaml`
@@ -103,8 +100,8 @@ allow_list = ["/", "/api/status/query", "/api/metrics"]
 > - `int`: 整数
 > - `PositiveInt`: 正整数 *(必须大于 0)*
 > - `bool`: 布尔值，可选 `true` _(是)_ / `false` _(否)_
-> - `list`: 列表 **_(无法在环境变量 / `.env` 中配置)_**
-> - `dict`: 字典 **_(无法在环境变量 / `.env` 中配置)_**
+> - `list`: 列表
+> - `dict`: 字典
 
 完整的配置项定义列表可以到 [`models.py`](../models.py) 中查看
 

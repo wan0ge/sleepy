@@ -306,6 +306,16 @@ class ConfigModel(BaseModel):
 
 # ========== 用户配置结束 ==========
 
+env_vaildate_json_keys = [
+    'status_status_list',
+    'metrics_allow_list',
+    'plugins_enabled',
+    'plugin'
+]
+'''
+此列表中的键将会尝试解析为 json
+(不包含 `sleepy_`)
+'''
 
 redirect_map = {
     '/query': '/api/status/query',
