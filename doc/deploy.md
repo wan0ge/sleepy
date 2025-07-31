@@ -1,14 +1,28 @@
 # 部署
 
+1. **[手动部署](#手动部署)** *(建议有自己的服务器 / 本地部署使用)*
+2. **[Huggingface 部署](#huggingface-部署)** *(无服务器推荐)*
+3. [Vercel 部署](#vercel-部署) *(限制较多, 不推荐使用)*
+4. [一键部署](#一键部署-未测试) *(未测试, 不推荐使用)*
+
+## 快速跳转
+
 - [部署](#部署)
+  - [快速跳转](#快速跳转)
   - [手动部署](#手动部署)
     - [安装](#安装)
     - [启动](#启动)
   - [Huggingface 部署](#huggingface-部署)
+<<<<<<< HEAD
     - [我承认你的代码写的确实很nb，但对我来说还是太吃操作了 (已过时)](#我承认你的代码写的确实很nb但对我来说还是太吃操作了-已过时)
+=======
+>>>>>>> main
     - [卡在 Deploying?](#卡在-deploying)
     - [如何使用自定义域名](#如何使用自定义域名)
   - [Vercel 部署](#vercel-部署)
+  - [一键部署 (未测试)](#一键部署-未测试)
+    - [Linux](#linux)
+    - [Windows](#windows)
 
 ## 手动部署
 
@@ -39,6 +53,7 @@ uv sync
 
 3. 编辑配置文件
 
+<<<<<<< HEAD
 > *配置文件变化史* <br/> 
 > ~~`data.json`~~ <br/>
 > -> ~~`config.json`~~ <br/>
@@ -48,6 +63,21 @@ uv sync
 > -> **环境变量 & `data/.env` & `data/config.yaml` & `data/config.toml` & `data/config.json`**
 
 在 `data` 目录下新建上面几种配置文件中的**一种**，并**按照 [此处](./config.md) 的说明编辑配置**
+=======
+在项目目录创建 `.env` 文件:
+
+```ini
+sleepy_main_host = "0.0.0.0" # 监听地址
+sleepy_main_port = "9010" # 端口号
+sleepy_secret = "改成别人猜不出来的密钥" # 密钥，相当于密码
+sleepy_page_user = "你的名字" # 将显示在网页中
+sleepy_page_favicon = "./static/favicon.ico" # 网站图标, 可替换 static/favicon.ico 自定义 (也可以用其他格式的, 自己改路径)
+sleepy_page_more_text = "欢迎来到我的状态页!" # 说两句? (也可以留空)
+sleepy_page_using_first = true # 使用中设备优先显示
+```
+
+更多配置项详见 [此处](./env.md)
+>>>>>>> main
 
 ### 启动
 
@@ -62,6 +92,7 @@ python3 main.py
 # 简易启动器
 python3 start.py
 ```
+
 默认服务 http 端口: **`9010`**
 
 ## Huggingface 部署
@@ -74,13 +105,23 @@ python3 start.py
 只需三步:
 
 1. 复制 Space `wyf9/sleepy` (**[点击直达](https://huggingface.co/spaces/wyf9/sleepy?duplicate=true&visibility=public)**)
+<<<<<<< HEAD
 2. 在复制页面设置 secret 和页面信息等环境变量 ***([配置文档](./config.md))***
+=======
+
+> 如果没有弹出窗口, 请手动点击右上角三点 -> `Duplicate this Space` (如图)
+
+![huggingface-5](https://ghimg.siiway.top/sleepy/deploy/huggingface-5.1.png)
+
+2. 在复制页面设置 secret 和页面信息等环境变量 *[**[配置示例](../.env.example)**]*
+>>>>>>> main
 3. 点击部署，等待完成后点击右上角三点 -> `Embed this space`，即可获得你的部署地址 *(类似于: <https://wyf9-sleepy.hf.space>)*
 
 > [!IMPORTANT]
 > **在创建时请务必选择 Space 类型为公开 (`Public`)，否则无法获取部署地址 (他人无法访问)!** <br/>
 > *Hugging Face Space 如 48h 未访问将会休眠，建议使用定时请求平台 (如 `cron-job.org`, `Uptime Kuma` 等) 定时请求 `(你的部署地址)/none`*
 
+<<<<<<< HEAD
 ### 我承认你的代码写的确实很nb，但对我来说还是太吃操作了 (已过时)
 
 <details>
@@ -104,6 +145,17 @@ python3 start.py
 
 > [!TIP]
 > *对所有的 Hugging Face Space 都有效*
+=======
+### 卡在 Deploying?
+
+> [!TIP]
+> 适用于日志中程序已经启动, 但部署状态仍然为 `Deploying` 的情况 <br/>
+> *对所有的 Hugging Face 仓库都有效*
+
+<details>
+
+<summary>解决方法</summary>
+>>>>>>> main
 
 1. 点击右上角三点 -> `Duplicate this Space`，**复制** Space 并**填写好和之前一样的环境变量**
 2. 在 `Settings` 页面底部 `Delete this Space` 处**删除**旧 Space
@@ -150,8 +202,13 @@ CMD bash cfd.sh
 
 ## Vercel 部署
 
+<<<<<<< HEAD
 > 可以使用自定义域名，但限制较多 **(如无法使用 SSE)** <br/>
 > *当前端检测到为 Vercel 部署时会自动回退到轮询方式更新*
+=======
+> 可以使用自定义域名，但**限制较多** (如无法使用 SSE, 请求数 / 请求完成时间有限制等) <br/>
+> *当前端检测到为 Vercel 部署时会回退到轮询方式更新*
+>>>>>>> main
 
 1. Fork 本项目
 2. 打开 [`vercel.com/new`](https://vercel.com/new)，并按照提示授权访问 GitHub *(如未注册则注册)*
@@ -174,3 +231,38 @@ CMD bash cfd.sh
 ![vercel-4](https://ghimg.siiway.top/sleepy/deploy/vercel-4.1.png)
 
 > 修改环境变量后需重新部署
+
+## 一键部署 (未测试)
+
+> [!WARNING]
+> 完全由 AI 生成, 未经任何测试, **不要使用此方式!!!**
+
+### Linux
+
+运行命令：
+
+```bash
+bash <(curl -s https://ghproxy.com/https://raw.githubusercontent.com/sleepy-project/sleepy/main/scripts/install.sh)
+```
+
+如果你的服务器不在中国大陆，可以去掉 `ghproxy.com/` 部分：
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/sleepy-project/sleepy/main/scripts/install.sh)
+```
+
+### Windows
+
+运行命令：
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+irm https://ghproxy.com/https://raw.githubusercontent.com/sleepy-project/sleepy/main/scripts/install.ps1 | iex
+```
+
+如果你的服务器不在中国大陆，可以去掉 `ghproxy.com/` 部分：
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+irm https://raw.githubusercontent.com/sleepy-project/sleepy/main/scripts/install.ps1 | iex
+```

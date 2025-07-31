@@ -1,101 +1,136 @@
-# /client
+# 客户端文档
 
 此目录存储客户端 (用于更新状态/设备状态)
 
-- [/client](#client)
-  - [CMDConsole](#cmdconsole)
-    - [配置](#配置)
-    - [使用](#使用)
-  - [CmdConsoleMulti](#cmdconsolemulti)
-    - [配置](#配置-1)
-    - [使用](#使用-1)
+**Windows**:
+  - [WinDevice](#WinDevice) *(已安装 Python 推荐)*
+  - [Win_Simple](#Win_Simple) *(未安装 Python 推荐)*
+
+**Android**:
+  - [AutoxjsScript](#AutoxjsScript) *(无需 Root, 需安装额外软件)*
+  - [MagiskService](#MagiskService) *(需 Root)*
+
+**Linux**:
+  - [LinuxScriptKDE](#LinuxScriptKDE) *(KDE Python 脚本)*
+  - [LinuxScriptHyprland](#LinuxScriptHyprland) *(Hyprland 原生脚本)*
+
+**MacOS**:
+  - [AppleShortcuts](#AppleShortcuts)
+
+**CLI** (命令行):
+  - [HomeworkDevice](#HomeworkDevice)
+  - [CMDConsole](#CMDConsole) *(不建议使用)*
+  - [CmdConsoleMulti](#CmdConsoleMulti) *(不建议使用)*
+
+**Others** (其他):
+  - [MinecraftScript](#MinecraftScript)
+  - [BrowserScript](#BrowserScript)
+  - [Zhixuewang](#Zhixuewang)
+
+> [!TIP]
+> 欢迎提交 Issue / PR 贡献自己的脚本！
+
+## 快速跳转
+
+- [客户端文档](#客户端文档)
+  - [快速跳转](#快速跳转)
+- [Windows](#windows)
   - [WinDevice](#windevice)
-    - [配置](#配置-2)
+    - [配置](#配置)
+    - [依赖安装](#依赖安装)
     - [自启动](#自启动)
       - [1. PM2](#1-pm2)
       - [2. 自启脚本](#2-自启脚本)
     - [无法获取网易云媒体信息](#无法获取网易云媒体信息)
+  - [Win\_Simple](#win_simple)
+    - [配置](#配置-1)
+    - [使用](#使用)
+- [Android](#android)
   - [AutoxjsScript](#autoxjsscript)
-    - [配置](#配置-3)
-    - [使用](#使用-2)
+    - [软件下载](#软件下载)
+    - [配置](#配置-2)
+    - [使用](#使用-1)
     - [安卓低版本运行](#安卓低版本运行)
   - [BrowserScript](#browserscript)
-    - [配置](#配置-4)
+    - [配置](#配置-3)
   - [HomeworkDevice](#homeworkdevice)
+    - [配置](#配置-4)
+    - [使用](#使用-2)
+  - [CMDConsole](#cmdconsole)
     - [配置](#配置-5)
     - [使用](#使用-3)
-  - [MinecraftScript](#minecraftscript)
-    - [Minescript](#minescript)
+  - [CmdConsoleMulti](#cmdconsolemulti)
     - [配置](#配置-6)
     - [使用](#使用-4)
-    - [自启](#自启)
-  - [LinuxScriptKDE](#linuxscriptkde)
+- [Others](#others)
+  - [MinecraftScript](#minecraftscript)
+    - [Minescript](#minescript)
     - [配置](#配置-7)
     - [使用](#使用-5)
-  - [LinuxScriptHyprland](#linuxscripthyprland)
+    - [自启](#自启)
+  - [BrowserScript](#browserscript-1)
     - [配置](#配置-8)
     - [使用](#使用-6)
-  - [MagiskService](#magiskservice)
+  - [LinuxScriptHyprland](#linuxscripthyprland)
     - [配置](#配置-9)
     - [使用](#使用-7)
-  - [Win\_Simple](#win_simple)
+  - [MagiskService](#magiskservice)
     - [配置](#配置-10)
     - [使用](#使用-8)
+  - [Win\_Simple](#win_simple-1)
+    - [配置](#配置-11)
+    - [使用](#使用-9)
   - [AppleShortcuts](#appleshortcuts)
     - [FullVer](#fullver)
     - [FastVer](#fastver)
   - [Zhixuewang](#zhixuewang)
-    - [配置](#配置-11)
-    - [使用](#使用-9)
+    - [配置](#配置-12)
+    - [使用](#使用-10)
   - [Other repos](#other-repos)
 
 > [!TIP]
 > 欢迎提交 Issue / PR 贡献自己的脚本！
 
-## [CMDConsole](./cmd_console.py)
-
-> by: [@wyf9](https://github.com/wyf9)
-
-一个简单的命令行客户端，用于手动更新状态
-
-依赖: `requests`
-
-### 配置
-
-https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/cmd_console.py#L14-L21
-
-### 使用
-
-启动脚本, 按照提示操作即可
-
-## [CmdConsoleMulti](./cmd_console_multi.py)
-
-> by: [@wyf9](https://github.com/wyf9)
-
-[CMDConsole](#cmdconsole) 的旧版本 (可选择多个服务)
-
-### 配置
-
-https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/cmd_console_multi.py#L14-L23
-
-### 使用
-
-同上, 多了一步选择服务
+# Windows
 
 ## [WinDevice](./win_device.py)
 
 > by: [@wyf9](https://github.com/wyf9)
 > Co-authored-by: [@kmizmal](https://github.com/kmizmal)
-> Co-authored-by: [@pwnInt](https://github.com/pwnInt) - ^C / 鼠标空闲检测
-> Co-authored-by: [@gongfuture](https://github.com/gongfuture) - 媒体信息获取
+> Co-authored-by: [@pwnInt](https://github.com/pwnInt) - **^C / 鼠标空闲检测**
+> Co-authored-by: [@gongfuture](https://github.com/gongfuture) - **媒体信息获取**
+> Co-authored-by: [@LeiSureLyYrsc](https://github.com/LeiSureLyYrsc) - **异步支持**
 
 在 Windows 上自动更新设备状态
 
-依赖: `requests`, `pywin32`
+依赖: `httpx`, `pywin32`
 
 ### 配置
 
-https://github.com/sleepy-project/sleepy/blob/b0580b451036fac1beb64b640c2d8d7b889c9a05/client/win_device.py#L28-L70
+https://github.com/sleepy-project/sleepy/blob/23c14c9a8a32a29a6f60b3d4347e07a5e32e64fc/client/win_device.py#L29-L75
+
+### 依赖安装
+
+```bat
+:: 必装依赖，其他为可选 (对应功能需要)
+pip install pywin32 httpx
+```
+
+```bat
+:: 媒体状态依赖 (Python <= 3.9)
+:: winrt-runtime 仅适用于 python 3.10+ (下面两个 winrt.windows.xxx 的依赖中有, 无需手动安装)
+pip install winrt
+```
+
+```bat
+:: 媒体状态依赖 (Python >= 3.10)
+pip install winrt.windows.media.control winrt.windows.foundation
+```
+
+```bat
+:: 电池状态依赖
+pip install psutil
+```
 
 ### 自启动
 
@@ -128,6 +163,26 @@ https://github.com/sleepy-project/sleepy/blob/b0580b451036fac1beb64b640c2d8d7b88
 
 **解决方法**: 安装 [BetterNCM](https://github.com/std-microblock/BetterNCM)，并安装 `InfLink` 插件，启用其中的 `SMTC` 功能即可正常获取
 
+## [Win_Simple](./Win_Simple/dist/Win_Simple.exe)
+
+> by: [@kmizmal](https://github.com/kmizmal) <br/>
+> 源代码: [`./Win_Simple/script.py`](./Win_Simple/script.py)
+
+### 配置
+
+配置文件 (首次打开自动在同级目录下创建): `config.ini`
+> `config.ini` 里面的注释写的很详细了，不再提供示例
+
+### 使用
+
+下载后双击 `Win_Simple.exe` 初始化配置文件，然后在同级目录下的 `config.ini` 中填写配置，重新打开即可
+
+> [!TIP]
+> 如何开机自启? <br/>
+> 创建一个 `Win_Simple.exe` 的快捷方式，然后扔到 `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup` 下即可
+
+# Android
+
 ## [AutoxjsScript](./autoxjs_device.js)
 
 > by: [@wyf9](https://github.com/wyf9) <br/>
@@ -135,15 +190,15 @@ https://github.com/sleepy-project/sleepy/blob/b0580b451036fac1beb64b640c2d8d7b88
 
 使用 [Autox.js](https://web.archive.org/web/20241224233444/https://github.com/kkevsekk1/AutoX) 编写的安卓自动更新状态脚本
 
-> [!WARNING]
-> Autox.js 已删库，RIP <br/>
-> 备份: [aiselp/AutoX](https://github.com/aiselp/AutoX) <br/>
-> 可自行寻找 [Auto.js](https://github.com/hyb1996/Auto.js) 的其他分支 **(可能需要作一些修改以兼容)**
+### 软件下载
 
 在使用前，请确保**已安装** Autox.js *且*授予**无障碍权限**
 
+**下载**: [aiselp/AutoX (Release)](https://github.com/aiselp/AutoX/releases)
+
 ### 配置
 
+https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/autoxjs_device.js#L8-L15
 https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/autoxjs_device.js#L8-L15
 
 ### 使用
@@ -157,8 +212,6 @@ https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1
 
 ### 安卓低版本运行
 
-<!-- > 方法提供: [@][https://github.com/] - waiting for reply -->
-
 如果需要在较低的安卓版本运行，无法安装上面 repo 中的安装包，可以从下载站下载旧版本:
 
 http://www.autoxjs.com/topic/116/autox-js
@@ -168,9 +221,9 @@ http://www.autoxjs.com/topic/116/autox-js
 <details>
 <summary>点击展开</summary>
 
-之所以报错是因为 **AutoX.js 旧版本不支持 Javascript 中的模板字符串**
+*之所以报错是因为 **AutoX.js 旧版本不支持 Javascript 中的模板字符串***
 
-解决方案就是手动将脚本中的模板字符串替换为 `+` 连接的形式，如:
+解决方案: **手动将脚本中的模板字符串替换为 `+` 连接的形式**，如:
 
 ```js
 // Before
@@ -181,19 +234,133 @@ console.log('[sleepyc] ' + msg);
 
 </details>
 
-## [BrowserScript](./browser-script-2025.2.10.user.js)
+### 启动时报错
 
-> by: [@nuym](https://github.com/nuym)
+如果可以安装软件, 但首次启动时报错:
 
-在任何支持油猴脚本的浏览器均可使用，*据作者↑说是为了解决 Mac 无法获取窗口标题，遂退而求其次获取浏览器页面（有系统就有浏览器，即有用户脚本）*
+<details>
+<summary>展开报错示例</summary>
 
-- [点击安装 (GitHub raw)](https://github.com/sleepy-project/sleepy/raw/refs/heads/main/client/browser-script.user.js)
+```java
+错误信息:
+Unable to start activity ComponentInfo{org.autojs.autoxjs.v7/org.autojs.autojs.ui.splash.SplashActivity}: java.lang.SecurityException: Unable to start service Intent { cmp=org.autojs.autoxjs.v7/com.stardust.autojs.IndependentScriptService }: Unable to launch app org.autojs.autoxjs.v7/10361 for service Intent { cmp=org.autojs.autoxjs.v7/com.stardust.autojs.IndependentScriptService }: process is bad
+java.lang.RuntimeException: Unable to start activity ComponentInfo{org.autojs.autoxjs.v7/org.autojs.autojs.ui.splash.SplashActivity}: java.lang.SecurityException: Unable to start service Intent { cmp=org.autojs.autoxjs.v7/com.stardust.autojs.IndependentScriptService }: Unable to launch app org.autojs.autoxjs.v7/10361 for service Intent { cmp=org.autojs.autoxjs.v7/com.stardust.autojs.IndependentScriptService }: process is bad
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3903)
+	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4049)
+	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:101)
+	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:135)
+	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:95)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2443)
+	at android.os.Handler.dispatchMessage(Handler.java:106)
+	at android.os.Looper.loopOnce(Looper.java:211)
+	at android.os.Looper.loop(Looper.java:300)
+	at android.app.ActivityThread.main(ActivityThread.java:8348)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:582)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+Caused by: java.lang.SecurityException: Unable to start service Intent { cmp=org.autojs.autoxjs.v7/com.stardust.autojs.IndependentScriptService }: Unable to launch app org.autojs.autoxjs.v7/10361 for service Intent { cmp=org.autojs.autoxjs.v7/com.stardust.autojs.IndependentScriptService }: process is bad
+	at android.app.ContextImpl.startServiceCommon(ContextImpl.java:1916)
+	at android.app.ContextImpl.startService(ContextImpl.java:1874)
+	at android.content.ContextWrapper.startService(ContextWrapper.java:827)
+	at com.stardust.autojs.servicecomponents.ScriptServiceConnection$Companion.start(ScriptServiceConnection.kt:129)
+	at org.autojs.autojs.ui.splash.SplashActivity.onCreate(SplashActivity.kt:51)
+	at android.app.Activity.performCreate(Activity.java:8577)
+	at android.app.Activity.performCreate(Activity.java:8541)
+	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1437)
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3884)
+	... 12 more
 
-- [点击安装 (ghp.ci)](https://ghp.ci/https://raw.githubusercontent.com/sleepy-project/sleepy/main/client/browser-script.user.js)
+```
+
+</details>
+
+有两种解决方案:
+
+1. 检查系统设置 (如 Google `Play 保护机制` 可能会将其阻止)
+2. 找 wyf9 获取旧版安装包
+
+## [MagiskService](./magisk/service.sh)
+
+> by: [@kmizmal](https://github.com/kmizmal)
+
+适用于 Magisk Root 环境的服务脚本
 
 ### 配置
 
-https://github.com/sleepy-project/sleepy/blob/2df5d622844816867506adc6d211dc5138fdefc0/client/browser-script.user.js#L18-L25
+[./magisk/config.cfg](./magisk/config.cfg)
+
+https://github.com/sleepy-project/sleepy/blob/7bb1866e8448d921f6161f1200164a19914d9910/client/magisk/config.cfg#L1-L6
+
+> [!TIP]
+> 详见 [说明](./magisk/README.md)
+
+### 使用
+
+刷入 [magisk.zip](./magisk/magisk.zip) 并重启即可
+
+# Linux
+
+## [LinuxScriptKDE](./linux_device_kde.py)
+
+> by: [@RikkaNaa](https://github.com/RikkaNaa)
+
+适用于 Linux KDE 桌面环境，且需要系统安装 [kdotool](https://github.com/jinliu/kdotool)
+
+如获取失败则视为未在使用，[变量计时参考](https://github.com/RikkaNaa/sleepy/commit/9d5b4fc2014b725df24304beaa9439a5eb07099b)
+
+### 配置
+
+https://github.com/sleepy-project/sleepy/blob/7fc21380a259247533db76f3a0443fa550fcffec/client/linux_device_kde.py#L18-L28
+
+### 使用
+
+可自行配置本脚本的自启动
+
+> 当进程接收到 `SIGTERM` 信号时将会发送未在使用请求
+
+## [LinuxScriptHyprland](./linux_device_hyprland.sh)
+
+> by: [@inoryxin](https://github.com/inoryxin)
+
+适用于 Linux Hyprland 桌面环境，无需任何依赖，开箱即用
+
+### 配置
+
+https://github.com/sleepy-project/sleepy/blob/7fc21380a259247533db76f3a0443fa550fcffec/client/linux_device_hyprland.sh#L7-L12
+
+### 使用
+
+直接启动即可
+
+> [!TIP]
+> 开机自启可自行在 `hyprland.conf` 中配置 <br/>
+> **注意: 需要给脚本加上可执行权限 *(`chmod +x`)*, 否则无法运行!**
+
+# MacOS
+
+## [AppleShortcuts](https://github.com/Detritalw/Sleepy-Client-Shortcuts)
+
+> by: [@Detritalw](https://github.com/Detritalw) <br/>
+> ***指向外部资源***
+
+### FullVer
+
+[点击链接安装完整版, 支持 Apple Watch, iPhone, iPad, mac...](https://www.icloud.com/shortcuts/aa31f2a5295842939be354285d4e9d14)
+
+### FastVer
+
+[点击链接安装极速版](https://www.icloud.com/shortcuts/eec863215bfb4d7ea7228b6032d1fc6c)
+
+**建议设置自动化 → 打开App → 选择全部App → 设置为不确认，立即执行 → 选择快捷指令为Sleepy Client Shortcuts Fast，即可获得超级好的体验。**
+
+> [!WARNING]
+> **IOS 版本 >= 18 才可使用** *(获取前台 App 命令)*
+> 这里的链接可能不是最新，[建议到项目内查看](https://www.icloud.com/shortcuts/92fbddbf922343f5b076c828f788371f)
+
+> [!TIP]
+> 你可以将该快捷指令设置为操作按钮、控制中心按钮、锁定屏幕按钮、敲击 2 / 3 下背板指令来快捷使用
+
+# CLI
 
 ## [HomeworkDevice](./homework_device.py)
 
@@ -254,6 +421,40 @@ for i in range(114514, 1, -1):
     sleep(11.45)
 ```
 
+## [CMDConsole](./cmd_console.py)
+
+> by: [@wyf9](https://github.com/wyf9) <br/>
+> *留档，不建议使用*
+
+一个简单的命令行客户端，用于手动更新状态
+
+依赖: `requests`
+
+### 配置
+
+https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/cmd_console.py#L14-L21
+
+### 使用
+
+启动脚本, 按照提示操作即可
+
+## [CmdConsoleMulti](./cmd_console_multi.py)
+
+> by: [@wyf9](https://github.com/wyf9) <br/>
+> *留档，不建议使用*
+
+[CMDConsole](#cmdconsole) 的旧版本 (可选择多个服务)
+
+### 配置
+
+https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/cmd_console_multi.py#L14-L23
+
+### 使用
+
+同上, 多了一步选择服务
+
+# Others
+
 ## [MinecraftScript](./mc_script.py)
 
 > by: [@wyf9](https://github.com/wyf9)
@@ -308,100 +509,19 @@ https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1
 autorun[*]=eval 'execute("\\sleepy")'
 ```
 
-## [LinuxScriptKDE](./linux_device_kde.py)
+## [BrowserScript](./browser-script-2025.2.10.user.js)
 
-> by: [@RikkaNaa](https://github.com/RikkaNaa)
+> by: [@nuym](https://github.com/nuym)
 
-适用于 Linux KDE 桌面环境，且需要系统安装 [kdotool](https://github.com/jinliu/kdotool)
+在任何支持油猴脚本的浏览器均可使用，*据作者↑说是为了解决 Mac 无法获取窗口标题，遂退而求其次获取浏览器页面（有系统就有浏览器，即有用户脚本）*
 
-如获取失败则视为未在使用，[变量计时参考](https://github.com/RikkaNaa/sleepy/commit/9d5b4fc2014b725df24304beaa9439a5eb07099b)
+- [点击安装 (GitHub raw)](https://github.com/sleepy-project/sleepy/raw/refs/heads/main/client/browser-script.user.js)
 
-### 配置
-
-https://github.com/sleepy-project/sleepy/blob/7fc21380a259247533db76f3a0443fa550fcffec/client/linux_device_kde.py#L18-L28
-
-### 使用
-
-可自行配置本脚本的自启动
-
-> 当进程接收到 `SIGTERM` 信号时将会发送未在使用请求
-
-## [LinuxScriptHyprland](./linux_device_hyprland.sh)
-
-> by: [@inoryxin](https://github.com/inoryxin)
-
-适用于 Linux Hyprland 桌面环境，无需任何依赖，开箱即用
+- [点击安装 (ghp.ci)](https://ghp.ci/https://raw.githubusercontent.com/sleepy-project/sleepy/main/client/browser-script.user.js)
 
 ### 配置
 
-https://github.com/sleepy-project/sleepy/blob/7fc21380a259247533db76f3a0443fa550fcffec/client/linux_device_hyprland.sh#L7-L12
-
-### 使用
-
-直接启动即可
-
-> [!TIP]
-> 开机自启可自行在 `hyprland.conf` 中配置 <br/>
-> **注意: 需要给脚本加上可执行权限 *(`chmod +x`)*, 否则无法运行!**
-
-## [MagiskService](./magisk/service.sh)
-
-> by: [@kmizmal](https://github.com/kmizmal)
-
-适用于 Magisk Root 环境的服务脚本
-
-### 配置
-
-[./magisk/config.cfg](./magisk/config.cfg)
-
-https://github.com/sleepy-project/sleepy/blob/7bb1866e8448d921f6161f1200164a19914d9910/client/magisk/config.cfg#L1-L6
-
-> [!TIP]
-> 详见 [说明](./magisk/README.md)
-
-### 使用
-
-刷入 [magisk.zip](./magisk/magisk.zip) 并重启即可
-
-## [Win_Simple](./Win_Simple/dist/Win_Simple.exe)
-
-> by: [@kmizmal](https://github.com/kmizmal) <br/>
-> Source: [`./Win_Simple/script.py`](./Win_Simple/script.py)
-
-### 配置
-
-配置文件 (首次打开自动在同级目录下创建): `config.ini`
-> `config.ini`里面注释写的很详细了，不再提供示例
-
-### 使用
-
-下载后双击 `Win_Simple.exe` 初始化配置文件，然后在同级目录下的 `config.ini` 中填写配置
-
-> [!TIP]
-> 如何开机自启? <br/>
-> 创建一个 `Win_Simple.exe` 的快捷方式，然后扔到 `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup` 下即可
-
-## [AppleShortcuts](https://github.com/Detritalw/Sleepy-Client-Shortcuts)
-
-> by: [@Detritalw](https://github.com/Detritalw) <br/>
-> ***指向外部资源***
-
-### FullVer
-
-[点击链接安装完整版, 支持 Apple Watch, iPhone, iPad, mac...](https://www.icloud.com/shortcuts/aa31f2a5295842939be354285d4e9d14)
-
-### FastVer
-
-[点击链接安装极速版](https://www.icloud.com/shortcuts/eec863215bfb4d7ea7228b6032d1fc6c)
-
-**建议设置自动化 → 打开App → 选择全部App → 设置为不确认，立即执行 → 选择快捷指令为Sleepy Client Shortcuts Fast，即可获得超级好的体验。**
-
-> [!WARNING]
-> 这里的链接可能不是最新，[建议到项目内查看](https://www.icloud.com/shortcuts/92fbddbf922343f5b076c828f788371f)
-
-> [!TIP]
-> 手动更新 <br/>
-> 您可以将该快捷指令设置为操作按钮、控制中心按钮、锁定屏幕按钮、敲击 2 / 3 下背板指令来快捷使用
+https://github.com/sleepy-project/sleepy/blob/2df5d622844816867506adc6d211dc5138fdefc0/client/browser-script.user.js#L18-L25
 
 ## [Zhixuewang](./zhixue.py)
 
