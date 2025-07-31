@@ -1,0 +1,12 @@
+[project]
+name = "sleepy-plugin-test"
+version = "0.1.0"
+description = "Only a test plugin"
+license = { text = "MIT" }
+readme = 'README.md'
+requires-python = ">=3.10"         # sleepy 不会看这个
+dependencies = []
+
+[tool.sleepy]
+require_version_min = [0, 0, 0]
+require_version_max = [114514, 1919810, 0]

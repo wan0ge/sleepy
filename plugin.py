@@ -10,6 +10,7 @@ from datetime import datetime
 
 import flask
 from werkzeug.exceptions import HTTPException
+from toml import loads as load_toml
 
 from models import ConfigModel, _StatusItemModel
 from data import Data, _DeviceStatusData
@@ -338,21 +339,33 @@ class PrivateModeChangedEvent(BaseEvent):
 
 # region plugin-api
 
+
 class VersionNotMatchException(BaseException):
     '''
     版本不匹配错误
     '''
-    def __init__(self, version_now: tuple[int, int, int], version_min: tuple[int, int, int], version_max: tuple[int, int, int]):
-        self.version_now = '.'.join(str(v) for v in version_now)
-        self.version_min = '.'.join(str(v) for v in version_min)
-        self.version_max = '.'.join(str(v) for v in version_max)
+
+    def __init__(self, plugin_name: str, now: tuple[int, int, int], min: tuple[int, int, int] | None = None, max: tuple[int, int, int] | None = None):
+        self.now = '.'.join(str(v) for v in now)
+        self.min = '.'.join(str(v) for v in min) if min else None
+        self.max = '.'.join(str(v) for v in max) if max else None
+
+        if self.min:
+            self.message = f'Main program is version {self.now}, but plugin {plugin_name} needs >={self.min}!'
+        elif self.max:
+            self.message = f'Main program is version {self.now}, but plugin {plugin_name} needs <{self.max}!'
+        else:
+            self.message = f'Incorrent VersionNotMatchException calling on plugin {plugin_name}!'
+
+    def __str__(self):
+        return self.message
 
 class Plugin:
     '''
     Sleepy 插件接口
     '''
     name: str
-    '''插件名称'''
+    '''插件名称 (即文件夹名)'''
     config: t.Any
     '''插件配置 (如传入 Model 则为对应 Model 实例, 否则为字典)'''
     _registry: dict[str, t.Any] = {}
@@ -363,28 +376,42 @@ class Plugin:
         name: str,
         config: t.Any = {},
         data: dict = {},
-        require_sleepy_version: tuple[tuple[int, int, int], tuple[int, int, int]] | None = None
+        require_version_min: tuple[int, int, int] | None = None,
+        require_version_max: tuple[int, int, int] | None = None
     ):
         '''
         初始化插件
 
-        :param name: 插件名称 (通常为 `__name__`)
+        :param name: 插件名称 (id?, 通常为 `__name__`)
         :param config: *(Model / dict)* 插件默认配置 (可选)
         :param data: 插件默认数据 (可选)
-        :param require_sleepy_version: 需要的 sleepy 版本区间 (包括前者, 不包括后者)
+        :param require_version_min: 适用的最小 sleepy 版本 (包括)
+        :param require_version_max: 适用的最小 sleepy 版本 (不包括)
         '''
+        self.name = name.split('.')[-1]
+
         # 检查版本要求
-        if require_sleepy_version:
-            sleepy_ver = PluginInit.instance.version
-            if not require_sleepy_version[0] < sleepy_ver < require_sleepy_version[1]:
-                # not match
-                raise VersionNotMatchException(sleepy_ver, require_sleepy_version[0], require_sleepy_version[1])
+        sleepy_ver = PluginInit.instance.version
+        pyproject_path = u.get_path(f'plugins/{self.name}/pyproject.toml')
+        if os.path.exists(pyproject_path):
+            with open(pyproject_path, 'r', encoding='utf-8') as f:
+                pyproject: dict = load_toml(f.read())
+        else:
+            pyproject: dict = {}
+
+        require_version_min = require_version_min or tuple(pyproject.get('tool', {}).get('sleepy', {}).get('require_version_min', (None)))
+        require_version_max = require_version_max or tuple(pyproject.get('tool', {}).get('sleepy', {}).get('require_version_max', ()))
+
+        if require_version_min and (not require_version_min <= sleepy_ver):
+            raise VersionNotMatchException(self.name, now=sleepy_ver, min=require_version_min)
+
+        if require_version_max and (not sleepy_ver < require_version_max):
+            raise VersionNotMatchException(self.name, now=sleepy_ver, max=require_version_max)
 
         # 初始化 & 注册插件
-        self.name = name.split('.')[-1]
         Plugin._registry[self.name] = self
 
-        # 加载配置
+        # 加载配置)
         if not config:
             # 1. None -> raw
             self.config = PluginInit.instance.c.plugin.get(self.name, {})
@@ -757,14 +784,13 @@ class PluginInit:
                     l.warning(f'[plugin] Invaild plugin {plugin_name}! it doesn\'t have a plugin instance!')
 
             except VersionNotMatchException as e:
-                l.warning(f'[plugin] Main program is version {e.version_now}, but plugin {plugin_name} needs >={e.version_min}, <{e.version_max}!')
+                l.warning(f'[plugin] {e}')
             except Exception as e:
                 l.warning(f'[plugin] Error when loading plugin {plugin_name}: {e}\n{format_exc()}')
 
         loaded_count = len(self.plugins_loaded)
         loaded_names = ", ".join([n.name for n in self.plugins_loaded])
         l.info(f'{loaded_count} plugin{"s" if loaded_count > 1 else ""} enabled: {loaded_names}' if loaded_count > 0 else f'No plugins enabled.')
-        l.debug(f'index cards: {self.index_cards}')
 
     def _register_route(self, rule: str, endpoint: str, view_func: t.Callable, options: dict[str, t.Any]):
         '''

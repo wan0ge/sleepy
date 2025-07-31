@@ -27,7 +27,7 @@ async function login() {
                 // 登录成功，重定向到管理面板
                 // 构建重定向URL，保留主题参数
 
-                window.location.href = '/panel/panel';
+                window.location.href = '/panel';
             } else {
                 // 登录失败
                 const data = await response.json();
@@ -44,7 +44,7 @@ async function login() {
         // 由于没有 /panel/auth 接口，我们需要手动设置 cookie
         document.cookie = `sleepy-secret=${encodeURIComponent(secret)}; max-age=${30 * 24 * 60 * 60}; path=/; samesite=Lax`;
 
-        window.location.href = '/panel/panel';
+        window.location.href = '/panel';
     }
 }
 
@@ -61,7 +61,7 @@ async function validateCookie() {
         if (response.ok) {
             // cookie 有效，重定向到管理面板
             console.log('Cookie 验证成功，正在重定向到管理面板...');
-            window.location.href = '/panel/panel';
+            window.location.href = '/panel';
             return true;
         } else {
             // cookie 无效，显示登录表单

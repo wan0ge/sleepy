@@ -818,7 +818,7 @@ def device_private_mode():
 # region routes-panel
 
 
-@app.route('/panel/panel')
+@app.route('/panel')
 @u.require_secret(redirect_to='/panel/login')
 def admin_panel():
     '''
@@ -863,7 +863,7 @@ def login():
     cookie_token = flask.request.cookies.get('sleepy-secret')
     if cookie_token == c.main.secret:
         # 如果 cookie 有效，直接重定向到管理面板
-        return flask.redirect('/panel/panel')
+        return flask.redirect('/panel')
 
     return render_template(
         'login.html',
@@ -972,13 +972,12 @@ if __name__ == '__main__':
         )
     except Exception as e:
         l.critical(f'Critical error when running server: {e}\n{format_exc()}')
-        exitcode = 1
+        p.trigger_event(pl.AppStoppedEvent(1))
+        exit(1)
     else:
         print()
+        p.trigger_event(pl.AppStoppedEvent(0))
         l.info('Bye.')
-        exitcode = 0
-    finally:
-        p.trigger_event(pl.AppStoppedEvent(exitcode))
-        exit(exitcode)
+        exit(0)
 
 # endregion end
