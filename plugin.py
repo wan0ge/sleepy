@@ -338,6 +338,14 @@ class PrivateModeChangedEvent(BaseEvent):
 
 # region plugin-api
 
+class VersionNotMatchException(BaseException):
+    '''
+    版本不匹配错误
+    '''
+    def __init__(self, version_now: tuple[int, int, int], version_min: tuple[int, int, int], version_max: tuple[int, int, int]):
+        self.version_now = '.'.join(str(v) for v in version_now)
+        self.version_min = '.'.join(str(v) for v in version_min)
+        self.version_max = '.'.join(str(v) for v in version_max)
 
 class Plugin:
     '''
@@ -350,14 +358,28 @@ class Plugin:
     _registry: dict[str, t.Any] = {}
     '''存放插件实例'''
 
-    def __init__(self, name: str, config: t.Any = {}, data: dict = {}):
+    def __init__(
+        self,
+        name: str,
+        config: t.Any = {},
+        data: dict = {},
+        require_sleepy_version: tuple[tuple[int, int, int], tuple[int, int, int]] | None = None
+    ):
         '''
         初始化插件
 
         :param name: 插件名称 (通常为 `__name__`)
         :param config: *(Model / dict)* 插件默认配置 (可选)
         :param data: 插件默认数据 (可选)
+        :param require_sleepy_version: 需要的 sleepy 版本区间 (包括前者, 不包括后者)
         '''
+        # 检查版本要求
+        if require_sleepy_version:
+            sleepy_ver = PluginInit.instance.version
+            if not require_sleepy_version[0] < sleepy_ver < require_sleepy_version[1]:
+                # not match
+                raise VersionNotMatchException(sleepy_ver, require_sleepy_version[0], require_sleepy_version[1])
+
         # 初始化 & 注册插件
         self.name = name.split('.')[-1]
         Plugin._registry[self.name] = self
@@ -377,7 +399,7 @@ class Plugin:
 
         self.data = u.deep_merge_dict(data, self.data)
 
-    # region plugin-api-meta
+    # region plugin-api-data
 
     @property
     def data(self):
@@ -440,7 +462,7 @@ class Plugin:
         '''
         return PluginInit.instance.app
 
-    # endregion plugin-api-meta
+    # endregion plugin-api-data
 
     # region plugin-api-route
 
@@ -683,6 +705,8 @@ class PluginInit:
     '''
     Plugin System Init
     '''
+    version: tuple[int, int, int]
+    '''主程序版本'''
     c: ConfigModel
     d: Data
     app: flask.Flask
@@ -699,7 +723,8 @@ class PluginInit:
     events: defaultdict[str, list[t.Callable]] = defaultdict(list)
     '''事件注册表'''
 
-    def __init__(self, config: ConfigModel, data: Data, app: flask.Flask):
+    def __init__(self, version: tuple[int, int, int], config: ConfigModel, data: Data, app: flask.Flask):
+        self.version = version
         self.c = config
         self.d = data
         self.app = app
@@ -731,6 +756,8 @@ class PluginInit:
                 else:
                     l.warning(f'[plugin] Invaild plugin {plugin_name}! it doesn\'t have a plugin instance!')
 
+            except VersionNotMatchException as e:
+                l.warning(f'[plugin] Main program is version {e.version_now}, but plugin {plugin_name} needs >={e.version_min}, <{e.version_max}!')
             except Exception as e:
                 l.warning(f'[plugin] Error when loading plugin {plugin_name}: {e}\n{format_exc()}')
 

@@ -53,7 +53,7 @@ try:
     with open(u.get_path('pyproject.toml'), 'r', encoding='utf-8') as f:
         file: dict = load_toml(f).get('tool', {}).get('sleepy-plugin', {})
         version_str: str = file.get('version-str', 'unknown')
-        version: tuple[int, int, int] = file.get('version', (0, 0, 0))
+        version: tuple[int, int, int] = tuple(file.get('version', (0, 0, 0)))
         f.close()
 
     # init flask app
@@ -118,6 +118,7 @@ try:
 
     # init plugin
     p = pl.PluginInit(
+        version=version,
         config=c,
         data=d,
         app=app

@@ -6,7 +6,10 @@ from flask import Request
 from plugin import Plugin, StatusUpdatedEvent
 
 l = getLogger(__name__)
-p = Plugin('test2')
+p = Plugin(
+    'test2',
+    require_sleepy_version=((6, 0, 0), (7, 0, 0))
+)
 
 p.init = lambda: l.debug('test2 loaded')
 
