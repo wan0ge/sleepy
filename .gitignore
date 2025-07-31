@@ -1,11 +1,14 @@
 # Python Cache
 __pycache__/
 
-# Config and Data
+# Config
 data/
 config.yaml
 config.toml
 .env
+
+# Data
+*.db
 data.json
 
 # For Local / venv
@@ -16,4 +19,4 @@ data.json
 
 # Others
 .vscode/launch.json
-*.db
+

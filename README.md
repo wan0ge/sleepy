@@ -15,30 +15,32 @@
 - [x] 支持 HTTPS (需要自行配置 SSL 证书)
 
 > [!TIP]
-> **最新 开发进度 / TODOs 见: [Discord](https://discord.gg/DyBY6gwkeg)** / [QQ](https://qm.qq.com/q/uItkv96Wn6) <br/>
-> 如有 Bug / 建议, 可 [issue](https://github.com/sleepy-project/sleepy/issues/new) 或 *[More contact](https://siiway.top/about/contact) (注明来意)*. <br/>
-> **[Summer Update 进度](https://github.com/orgs/sleepy-project/projects/1)**
+> **最新 开发进度 / TODOs 见: [Discord][link-dc]** / [Telegram][link-tg] / [QQ][link-qq]<br/>
+> 如有 Bug / 建议, 可发 issue (**[Bug][link-issue-bug]** / **[Feature][link-issue-feature]**) 或选择上面的联系方式 *(注明来意)*.
 
 ### Preview
 
-个人站点: [sleepy.wyf9.top](https://sleepy.wyf9.top)
+演示站: [sleepy.wyf9.top](https://sleepy.wyf9.top)
 
-演示站: [sleepy-preview.wyf9.top](https://sleepy-preview.wyf9.top)
+**开放预览站**: [sleepy-preview.wyf9.top](https://sleepy-preview.wyf9.top)
 
-HuggingFace 部署预览: [wyf9-sleepy.hf.space](https://wyf9-sleepy.hf.space)
+<details>
 
-Vercel 部署预览: [sleepy-vercel.wyf9.top](https://sleepy-vercel.wyf9.top)
+<summary>展开更多</summary>
 
-> 预览站允许测试 API，且直接运行开发版本 (**密钥均为 `wyf9test`**)
+**HuggingFace** 部署预览: [wyf9-sleepy.hf.space](https://wyf9-sleepy.hf.space)
 
-> [!WARNING]
-> *不要拿演示站做坏事 (比如 js 注入，已由 DeepSeek 强力修复 / 违法信息) ~~，没准哪天我会加访问日志~~*
+**Vercel** 部署预览: [sleepy-vercel.wyf9.top](https://sleepy-vercel.wyf9.top)
+
+**开发服务器**: [请在 Discord 服务器查看][link-dc]
+
+</details>
 
 ## 部署 / 更新
 
 请移步 **[部署教程](./doc/deploy.md)** 或 **[更新教程](./doc/update.md)** *(多图警告)*
 
-## Client
+## 客户端
 
 搭建完服务端后，你可在 **[`/client`](./client/README.md)** 找到客户端 (用于**手动更新状态**/**自动更新设备打开应用**)
 
@@ -48,16 +50,23 @@ Vercel 部署预览: [sleepy-vercel.wyf9.top](https://sleepy-vercel.wyf9.top)
 
 详细的 API 文档见 [doc/api.md](./doc/api.md).
 
-## 优化站点
+<!-- ## 插件系统
 
-见 [Best Practice](./doc/best_practice.md).
+(普通用户看这个) **[doc/plugin.md](./doc/plugin.md)**
 
-> [!TIP]
-> 想自定义你的状态列表 / metrics 统计白名单? **[见 `setting` 目录](./setting/README.md)**
+(插件开发看这个) **[doc/plugin-dev/README.md](./doc/plugin-dev/README.md)** -->
 
 ## Star History
 
 [![Star History Chart (如无法加载图片可点击查看)](https://api.star-history.com/svg?repos=sleepy-project/sleepy&type=Date)](https://star-history.com/#sleepy-project/sleepy&Date)
+
+## 贡献者
+
+> [!WARNING]
+> 在提交代码前, 请先查阅 **[贡献准则](https://github.com/sleepy-project/.github/blob/main/CODE_OF_CONDUCT.md)** 和 **[贡献指南](./CONTRIBUTING.md)**
+
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
 
 ## 关于
 
@@ -76,3 +85,11 @@ Vercel 部署预览: [sleepy-vercel.wyf9.top](https://sleepy-vercel.wyf9.top)
 对智能家居 / Home Assistant 感兴趣的朋友，一定要看看 WinMEMZ 的 [sleepy 重生版](https://maao.cc/project-sleepy/): **[maoawa/project-sleepy](https://github.com/maoawa/project-sleepy)!**
 
 感谢 [@1812z](https://github.com/1812z) 的 B 站视频推广~ **([BV1LjB9YjEi3](https://www.bilibili.com/video/BV1LjB9YjEi3))**
+
+---
+
+[link-dc]: https://sleepy.siiway.top/t/dc
+[link-tg]: https://sleepy.siiway.top/t/tgc
+[link-qq]: https://sleepy.siiway.top/t/qq
+[link-issue-bug]: https://sleepy.siiway.top/t/bug
+[link-issue-feature]: https://sleepy.siiway.top/t/feature

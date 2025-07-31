@@ -51,43 +51,45 @@
     - [配置](#配置-2)
     - [使用](#使用-1)
     - [安卓低版本运行](#安卓低版本运行)
-    - [启动时报错](#启动时报错)
-  - [MagiskService](#magiskservice)
+  - [BrowserScript](#browserscript)
     - [配置](#配置-3)
-    - [使用](#使用-2)
-- [Linux](#linux)
-  - [LinuxScriptKDE](#linuxscriptkde)
-    - [配置](#配置-4)
-    - [使用](#使用-3)
-  - [LinuxScriptHyprland](#linuxscripthyprland)
-    - [配置](#配置-5)
-    - [使用](#使用-4)
-- [MacOS](#macos)
-  - [AppleShortcuts](#appleshortcuts)
-    - [FullVer](#fullver)
-    - [FastVer](#fastver)
-- [CLI](#cli)
   - [HomeworkDevice](#homeworkdevice)
-    - [配置](#配置-6)
-    - [使用](#使用-5)
+    - [配置](#配置-4)
+    - [使用](#使用-2)
   - [CMDConsole](#cmdconsole)
-    - [配置](#配置-7)
-    - [使用](#使用-6)
+    - [配置](#配置-5)
+    - [使用](#使用-3)
   - [CmdConsoleMulti](#cmdconsolemulti)
-    - [配置](#配置-8)
-    - [使用](#使用-7)
+    - [配置](#配置-6)
+    - [使用](#使用-4)
 - [Others](#others)
   - [MinecraftScript](#minecraftscript)
     - [Minescript](#minescript)
-    - [配置](#配置-9)
-    - [使用](#使用-8)
+    - [配置](#配置-7)
+    - [使用](#使用-5)
     - [自启](#自启)
-  - [BrowserScript](#browserscript)
+  - [BrowserScript](#browserscript-1)
+    - [配置](#配置-8)
+    - [使用](#使用-6)
+  - [LinuxScriptHyprland](#linuxscripthyprland)
+    - [配置](#配置-9)
+    - [使用](#使用-7)
+  - [MagiskService](#magiskservice)
     - [配置](#配置-10)
-  - [Zhixuewang](#zhixuewang)
+    - [使用](#使用-8)
+  - [Win\_Simple](#win_simple-1)
     - [配置](#配置-11)
     - [使用](#使用-9)
+  - [AppleShortcuts](#appleshortcuts)
+    - [FullVer](#fullver)
+    - [FastVer](#fastver)
+  - [Zhixuewang](#zhixuewang)
+    - [配置](#配置-12)
+    - [使用](#使用-10)
   - [Other repos](#other-repos)
+
+> [!TIP]
+> 欢迎提交 Issue / PR 贡献自己的脚本！
 
 # Windows
 
@@ -196,6 +198,7 @@ pip install psutil
 
 ### 配置
 
+https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/autoxjs_device.js#L8-L15
 https://github.com/sleepy-project/sleepy/blob/e6b77af1e4333ad570983b5bf9ac397cb1d40d7b/client/autoxjs_device.js#L8-L15
 
 ### 使用
@@ -385,15 +388,14 @@ https://github.com/sleepy-project/sleepy/blob/2df5d622844816867506adc6d211dc5138
 
 > 点击链接跳转 api 文档
 
-- [`query()`](../doc/api.md#query): 查看当前状态 *(未格式化输出)*
-- [`status_list()`](../doc/api.md#status-list): 查看可用状态列表 *(未格式化输出)*
-- [`metrics()`](../doc/api.md#metrics): 查看统计数据 *(未格式化输出)*
+- [`query()`](../doc/api.md#apistatusquery): 查看当前状态 *(未格式化输出)*
+- [`status_list()`](../doc/api.md#apistatuslist): 查看可用状态列表 *(未格式化输出)*
+- [`metrics()`](../doc/api.md#apimetrics): 查看统计数据 *(未格式化输出)*
 - [`status(stat: int)`](../doc/api.md#status-set): 设置状态
-- [`device_set(id: str, show_name: str, msg: str, using: bool = True)`](../doc/api.md#device-set): 设备状态设置
-- [`device_remove(id: str)`](../doc/api.md#device-remove): 移除设备状态
-- [`device_clear()`](../doc/api.md#device-clear): 清除设备状态
-- [`private_mode(private: bool)`](../doc/api.md#device-private-mode): 开关隐私模式
-- [`save_data()`](../doc/api.md#storage-save-data): 保存数据到 `data.json`
+- [`device_set(id: str, show_name: str, msg: str, using: bool = True)`](../doc/api.md#apideviceset): 设备状态设置
+- [`device_remove(id: str)`](../doc/api.md#apideviceremove): 移除设备状态
+- [`device_clear()`](../doc/api.md#apideviceclear): 清除设备状态
+- [`private_mode(private: bool)`](../doc/api.md#apideviceprivate): 开关隐私模式
 
 </details>
 
@@ -541,14 +543,14 @@ sleepy_page_zhixue = true
 
 ### 使用
 
-需要将本脚本放在服务器的 `server.py` 同级目录运行，或编辑 L195-L197:
+需要将本脚本放在服务器的 `main.py` 同级目录运行，或编辑 L195-L197:
 
 https://github.com/sleepy-project/sleepy/blob/73a5e3507c1ca0454bc39c685541d53d228df41f/client/zhixue.py#L195-L197
 
 ## Other repos
 
 > [!IMPORTANT]
-> 在功能 / API 实现上有不同，需要进行修改以与本分支适配 (见 [API #device-set](../doc/api.md#device-set))
+> 在功能 / API 实现上有不同，需要进行修改以与本分支适配 (见 [API #device-set](../doc/api.md#apideviceset))
 
 - [1812z/sleepy] Android [Macrodroid](https://www.bing.com/search?q=Macrodroid%20download): [(main) `前台应用状态.macro`](https://github.com/1812z/sleepy/blob/main/%E5%89%8D%E5%8F%B0%E5%BA%94%E7%94%A8%E7%8A%B6%E6%80%81.macro)
 - [HBWuChang/sleepy] Android Magisk: [(main) `_example/magisk/service.sh`](https://github.com/HBWuChang/sleepy/blob/main/_example/magisk/service.sh) *(详见脚本目录)*
