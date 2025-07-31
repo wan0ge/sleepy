@@ -129,7 +129,7 @@ div p {
   padding-bottom: 5px;
 }
 
-.more-card {
+#more-info {
   border-radius: 5px;
   padding: 2rem 1rem;
   margin: 1rem auto;
@@ -147,7 +147,7 @@ div p {
   overflow: hidden;
 }
 
-.more-card::before {
+#more-info::before {
   content: "$ more.sh";
   display: block;
   color: var(--console-green);
@@ -351,7 +351,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* Console style for user status */
-#user-status h1, #user-status h3 {
+#main h1, #main h3 {
   font-family: var(--console-font);
   text-shadow: 0 0 5px var(--console-shadow);
 }

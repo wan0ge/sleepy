@@ -341,6 +341,7 @@ def after_request(resp: flask.Response):
     evt = p.trigger_event(pl.AfterRequestHook(resp))
     if evt.intercepted:
         return evt.interception
+    evt.response.headers.add('Sleepy-Version', f'{version_str} ({version})')
     return evt.response
 
 # endregion inject

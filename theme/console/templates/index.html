@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ c.page.title }}</title>
-    <meta name="description" content="{{ c.page.desc }}">
-    <link rel="icon" href="{{ c.page.favicon }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}?theme={{ current_theme }}">
+    <title>{{ page_title }}</title>
+    <meta name="description" content="{{ page_desc }}">
+    <link rel="icon" href="{{ page_favicon }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <style>
         html,
         body {
             font-family: var(--console-font);
-            background: url('{{ c.page.background }}') no-repeat center center fixed;
+            background: url('{{ page_background }}') no-repeat center center fixed;
         }
     </style>
 
@@ -20,49 +20,15 @@
 
 <body>
     <div class="container">
-        <div class="card" id="user-status">
-
-            <h3>{{ c.page.name }}'s Online Status</h3>
-            <div>
-                <p>$ online_status.sh</p>
-                <p>> STATUS: <span id="status">{{ status['name'] }}</span><span class="console-cursor">_</span></p>
-                <p id="additional-info">{{ status['desc'] | safe }}</p>
-                <p id="device-status">> DEVICES: [设备状态列表]</p>
-            </div>
-
-            <p id="last-updated">// 最后更新: {{ last_updated }}</p>
-        </div>
-
-        {% for plugin in plugins %}
-        <div class="card" id="plugin-{{ plugin[0] }}">
-            <p>$ plugin_{{ plugin[0] }}.sh</p>
-            <div class="plugin-content">
-                {{ plugin[1] | safe }}
-            </div>
+        {% for card_name, card_value in cards.items() %}
+        <div class="card" id="{{ card_name }}">
+            <p>$ {{ card_name }}.sh</p>
+            {{ card_value | safe }}
         </div>
         {% endfor %}
-
-        <div class="more-card" id="more-text">
-
-            <div class="console-help">
-                <p>> 你可以通过这个页面视奸 <b>{{ c.page.name }}</b>。</p>
-                <p>> 可用命令:</p>
-                <p> - <a href="{{ c.page.learn_more_link }}" target="_blank">{{ c.page.learn_more_text | safe }}</a></p>
-                <p> - <a href="/panel/login">admin</a></p>
-
-                <p>> 主题选择:</p>
-                {% for theme in available_themes %}
-                <p>- <a href="/?theme={{ theme }}" style="color: rgb(0, 255, 0);">theme {{ theme }}</a></p>
-                {% endfor %}
-            </div>
-        </div>
     </div>
 
-    <script>
-        document.getElementById('status').classList.add("{{ status['color'] }}");
-    </script>
-
-    <script type="module" src="{{ url_for('static', filename='get.js') }}?theme={{ current_theme }}" defer></script>
+    <script type="module" src="{{ url_for('static', filename='get.js') }}" defer></script>
 
 </body>
 

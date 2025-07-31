@@ -28,8 +28,9 @@
         </div>
         {% endfor %}
     </div>
-
 </body>
+
+<script type="module" src="{{ url_for('static', filename='get.js') }}" defer></script>
 
 {{ inject | safe }}
 
