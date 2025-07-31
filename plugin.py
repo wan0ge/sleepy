@@ -9,14 +9,15 @@ from collections import defaultdict
 from datetime import datetime
 
 import flask
+from werkzeug.exceptions import HTTPException
 
-from models import ConfigModel
-from data import Data
+from models import ConfigModel, _StatusItemModel
+from data import Data, _DeviceStatusData
 import utils as u
 
 l = getLogger(__name__)
 
-# region plugin-events
+# region events
 
 
 class BaseEvent:
@@ -27,30 +28,18 @@ class BaseEvent:
     '''事件 id'''
     time: datetime = datetime.now()
     '''事件生成时间'''
-
-    cancelable: bool = True
-    '''事件是否可取消'''
     interceptable: bool = True
     '''事件是否可拦截'''
 
-    canceled: bool = False
-    '''事件是否被取消 (取消后不会传递给处理函数, 如前后状态一样时事件无效)'''
     intercepted: bool = False
     '''事件是否被拦截'''
     interception: t.Any = None
     '''拦截后返回结果'''
-    request: flask.Request | None = None
+    request: flask.Request | None = flask.request if flask.request else None
     '''触发事件的请求 (如有)'''
 
     def __init__(self):
         pass
-
-    def cancel(self):
-        '''
-        取消事件 (如果可取消)
-        '''
-        if self.cancelable:
-            self.canceled = True
 
     def intercept(self, response: t.Any):
         '''
@@ -60,13 +49,22 @@ class BaseEvent:
             self.intercepted = True
             self.interception = response
 
+# region events-run
+
+
+class AppInitializedEvent(BaseEvent):
+    '''
+    应用初始化完成事件
+    '''
+    id = 'app_initialized'
+    interceptable = False
+
 
 class AppStartedEvent(BaseEvent):
     '''
     应用启动事件
     '''
     id = 'app_started'
-    cancelable = False
     interceptable = False
 
 
@@ -75,11 +73,158 @@ class AppStoppedEvent(BaseEvent):
     应用停止事件
     '''
     id = 'app_stopped'
-    cancelable = False
     interceptable = False
 
     def __init__(self, exitcode: int):
         self.exitcode = exitcode
+
+# endregion events-run
+
+# region events-error
+
+
+class APIUnsuccessfulEvent(BaseEvent):
+    '''
+    触发 APIUnsuccessful 事件
+    '''
+    id = 'api_unsuccessful'
+    interceptable = True
+
+    def __init__(self, error: u.APIUnsuccessful):
+        self.error = error
+
+
+class HTTPErrorEvent(BaseEvent):
+    '''
+    触发 HTTP Error 事件
+    '''
+    id = 'http_error'
+    interceptable = True
+
+    def __init__(self, error: HTTPException):
+        self.error = error
+
+
+class UnhandledErrorEvent(BaseEvent):
+    '''
+    触发未捕获错误事件
+    '''
+    id = 'unhandled_error'
+    interceptable = True
+
+    def __init__(self, error: Exception):
+        self.error = error
+
+# endregion events-error
+
+# region events-request
+
+
+class BeforeRequestHook(BaseEvent):
+    '''
+    before_request 钩子
+    '''
+    id = 'before_request'
+    interceptable = True
+
+
+class AfterRequestHook(BaseEvent):
+    '''
+    after_request 钩子
+    '''
+    id = 'after_request'
+    interceptable = True
+
+    def __init__(self, response: flask.Response):
+        self.response = response
+
+# endregion events-request
+
+# region events-special
+
+
+class IndexAccessEvent(BaseEvent):
+    '''
+    请求主页事件
+    '''
+    id = 'index_access'
+    interceptable = True
+
+    def __init__(self, page_title: str, page_desc: str, page_favicon: str, page_background: str, cards: dict[str, str], injects: list[str]):
+        self.page_title = page_title
+        self.page_desc = page_desc
+        self.page_favicon = page_favicon
+        self.page_background = page_background
+        self.cards = cards
+        self.injects = injects
+
+
+class FaviconAccessEvent(BaseEvent):
+    '''
+    请求 /favicon.ico 事件
+    '''
+    id = 'favicon_access'
+    interceptable = True
+
+    def __init__(self, favicon_url: str):
+        self.favicon_url = favicon_url
+
+
+class MetadataAccessEvent(BaseEvent):
+    '''
+    请求 /api/meta 事件
+    '''
+    id = 'metadata_access'
+    interceptable = True
+
+    def __init__(self, metadata: dict):
+        self.metadata = metadata
+
+
+class MetricsAccessEvent(BaseEvent):
+    '''
+    请求 /api/metrics 事件
+    '''
+    id = 'metrics_access'
+    interceptable = True
+
+    def __init__(self, metrics_repsonse: dict[str, t.Any]):
+        self.metrics_response = metrics_repsonse
+
+# endregion events-special
+
+# region events-status
+
+
+class QueryAccessEvent(BaseEvent):
+    '''
+    请求 /api/status/query 事件
+    '''
+    id = 'query_access'
+    interceptable = True
+
+    def __init__(self, query_response: dict[str, t.Any]):
+        self.query_response = query_response
+
+
+class StreamConnectedEvent(BaseEvent):
+    '''
+    event stream 连接事件 (请求 /api/status/events)
+    '''
+    id = 'stream_connected'
+    interceptable = True
+
+    def __init__(self, event_id: int):
+        # 说实话我也不知道为什么自己要加一个 Last-Event-Id
+        self.event_id = event_id
+
+
+class StreamDisconnectedEvent(BaseEvent):
+    '''
+    event stream 断开事件
+    '''
+    id = 'stream_disconnected'
+    interceptable = False
 
 
 class StatusUpdatedEvent(BaseEvent):
@@ -87,27 +232,44 @@ class StatusUpdatedEvent(BaseEvent):
     手动状态更新事件
     '''
     id = 'status_updated'
-    cancelable = True
     interceptable = True
 
-    def __init__(self, old_status: int, new_status: int):
+    def __init__(self, old_exists: bool, old_status: _StatusItemModel, new_exists: bool, new_status: _StatusItemModel):
         '''
+        :param old_exists: 旧状态是否存在
         :param old_status: 旧状态
+        :param new_exists: 新状态是否存在
         :param new_status: 新状态
         '''
-        if old_status == new_status:
-            self.canceled = True
+        self.old_exists = old_exists
         self.old_status = old_status
+        self.new_exists = new_exists
         self.new_status = new_status
+
+
+class StatuslistAccessEvent(BaseEvent):
+    '''
+    请求 /api/status/list 事件
+    '''
+    id = 'statuslist_access'
+    interceptable = True
+
+    def __init__(self, status_list: list[_StatusItemModel]):
+        self.status_list = status_list
+
+# endregion events-status
+
+# region events-device
 
 
 class DeviceSetEvent(BaseEvent):
     '''
-    设备状态更新事件
+    设备状态更新事件 (请求 /api/device/set)
     '''
     id = 'device_set'
+    interceptable = True
 
-    def __init__(self, device_id: str, show_name: str, using: bool | None, status: str, fields: dict[str, t.Any]):
+    def __init__(self, device_id: str | None, show_name: str | None, using: bool | None, status: str | None, fields: dict[str, t.Any]):
         '''
         :param device_id: 设备 id
         :param show_name: 设备前台显示名称
@@ -126,19 +288,22 @@ class DeviceRemovedEvent(BaseEvent):
     设备移除事件
     '''
     id = 'device_removed'
+    interceptable = True
 
-    def __init__(self, device_id: str, device_show_name: str, device_using: bool, device_status: str, device_fields: dict[str, t.Any]):
+    def __init__(self, exists: bool, device_id: str, show_name: str | None, using: bool | None, status: str | None, fields: dict[str, t.Any] | None):
         '''
+        :param exists: 设备在请求时是否存在
         :param device_id: 设备 id
         :param show_name: 设备前台显示名称
         :param using: 设备是否在使用
         :param status: 设备状态
         '''
+        self.exists = exists
         self.device_id = device_id
-        self.device_show_name = device_show_name
-        self.device_using = device_using
-        self.device_status = device_status
-        self.device_fields = device_fields
+        self.show_name = show_name
+        self.using = using
+        self.status = status
+        self.fields = fields
 
 
 class DeviceClearedEvent(BaseEvent):
@@ -146,6 +311,10 @@ class DeviceClearedEvent(BaseEvent):
     设备清除事件
     '''
     id = 'device_cleared'
+    interceptable = True
+
+    def __init__(self, devices: dict[str, _DeviceStatusData]):
+        self.devices = devices
 
 
 class PrivateModeChangedEvent(BaseEvent):
@@ -153,20 +322,19 @@ class PrivateModeChangedEvent(BaseEvent):
     隐私模式切换事件
     '''
     id = 'private_mode_changed'
+    interceptable = True
 
     def __init__(self, old_status: bool, new_status: bool):
         '''
         :param old_status: 旧状态
         :param new_status: 新状态
         '''
-        if old_status == new_status:
-            self.canceled = True
         self.old_status = old_status
         self.new_status = new_status
 
+# endregion events-device
 
-# endregion plugin-events
-
+# endregion events
 
 # region plugin-api
 
@@ -583,16 +751,17 @@ class PluginInit:
         )
         l.debug(f'Registered Route: {rule} -> {endpoint}')
 
-    def trigger_event(self, event, request: flask.Request | None = None):
+    def trigger_event(self, event):
         '''
         触发事件
 
         :param event: 事件实例 (不可只使用 id)
-        :param request: 触发事件的请求
         '''
         for e in self.events[event.id]:
             try:
-                event = e(event=event, request=request)
+                event = e(event=event, request=event.request)
+                if event.intercepted:
+                    break
             except Exception as err:
                 l.warning(f'[plugin] Error when trigging event {event.id} with function {e}: {err}\n{format_exc()}')
         return event

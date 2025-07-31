@@ -140,7 +140,7 @@ function reconnectWithDelay(delay) {
 }
 
 // 立即重连函数
-function reconnectNow() {
+window.reconnectNow = function () {
     console.log('[SSE] 用户选择立即重连');
     clearInterval(delayInterval); // 清除当前倒计时
     clearInterval(countdownInterval);

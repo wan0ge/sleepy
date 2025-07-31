@@ -217,43 +217,6 @@ sleepy-secret=MySecretCannotGuess
 }
 ```
 
-#### Response (OLD)
-
-> [!IMPORTANT]
-> 作为兼容旧版选项提供, 需要加上参数请求: `/api/status/query?version=1`
-
-<details>
-<summary>点击展开</summary>
-
-```jsonc
-// 200 OK
-{
-  "time": "2024-12-28 00:21:24", // 服务端时间
-  "timezone": "Asia/Shanghai", // 服务端配置的时区
-  "success": true, // 请求是否成功
-  "status": 0, // 获取到的状态码
-  "info": { // 对应状态码的信息
-    "name": "活着", // 状态名称
-    "desc": "目前在线，可以通过任何可用的联系方式联系本人。", // 状态描述
-    "color": "awake"// 状态颜色, 对应 static/style.css 中的 .sleeping .awake 等类
-  },
-  "device": { // 设备列表
-    "device-1": { // 标识符，唯一
-      "show_name": "MyDevice1", // 前台显示名称
-      "using": "false", // 是否正在使用
-      "app_name": "bilibili" // 应用名 (如 using == false 且设置了 status.not_using 则会被替换)
-    }
-  },
-  "last_updated": "2024-12-20 23:51:34", // 信息上次更新的时间
-  "refresh": 5000, // 刷新时间 (ms)
-  "device_status_slice": 20 // 设备状态截取文字数
-}
-```
-
-> 返回中 **日期/时间** 的时区默认为 **`Asia/Shanghai`** *(即北京时间)*, 可在配置中修改
-
-</details>
-
 ### /api/status/set
 
 [Back to ## status](#status)

@@ -43,7 +43,7 @@ except:
 Import module Failed!
  * Please make sure you installed all dependencies in requirements.txt
  * If you don't know how, see doc/deploy.md
- * If you believe that's our fault, report to us: https://wyf9.top/t/sleepy/bug
+ * If you believe that's our fault, report to us: https://sleepy.siiway.top/t/bug
  * And provide the logs (below) to us:
 '''[1:-1], flush=True)
     raise
@@ -133,6 +133,8 @@ except u.SleepyException as e:
 except:
     l.critical(f'Unexpected Error!\n{format_exc()}')
     exit(3)
+
+p.trigger_event(pl.AppInitializedEvent())
 
 # endregion init
 
@@ -224,25 +226,34 @@ def api_unsuccessful_handler(e: u.APIUnsuccessful):
     处理 `APIUnsuccessful` 错误
     '''
     l.error(f'API Calling Error: {e}')
+    evt = p.trigger_event(pl.APIUnsuccessfulEvent(e))
+    if evt.intercepted:
+        return evt.interception
     return {
         'success': False,
-        'code': e.code,
-        'details': e.details,
-        'message': e.message
-    }, e.code
+        'code': evt.error.code,
+        'details': evt.error.details,
+        'message': evt.error.message
+    }, evt.error.code
 
 
-@app.errorhandler(Exception)
-def error_handler(e: Exception):
-    '''
-    处理未捕获运行时错误
-    '''
-    if isinstance(e, HTTPException):
-        l.warning(f'HTTP Error: {e}')
-        return e
-    else:
-        l.error(f'Unhandled Error: {e}\n{format_exc()}')
-        return f'Unhandled Error: {e}'
+# @app.errorhandler(Exception)
+# def error_handler(e: Exception):
+#     '''
+#     处理未捕获运行时错误
+#     '''
+#     if isinstance(e, HTTPException):
+#         l.warning(f'HTTP Error: {e}')
+#         evt = p.trigger_event(pl.HTTPErrorEvent(e))
+#         if evt.intercepted:
+#             return evt.interception
+#         return evt.error
+#     else:
+#         l.error(f'Unhandled Error: {e}\n{format_exc()}')
+#         evt = p.trigger_event(pl.UnhandledErrorEvent(e))
+#         if evt.intercepted:
+#             return evt.interception
+#         return f'Unhandled Error: {evt.error}'
 
 # endregion errorhandler
 
@@ -308,6 +319,10 @@ def before_request():
         flask.g.theme = c.page.theme
     flask.g.secret = c.main.secret
 
+    evt = p.trigger_event(pl.BeforeRequestHook())
+    if evt.intercepted:
+        return evt.interception
+
 
 @app.after_request
 def after_request(resp: flask.Response):
@@ -322,7 +337,10 @@ def after_request(resp: flask.Response):
         d.record_metrics(path)
     # --- access log
     l.info(f'[Request] {flask.g.ipstr} | {path} -> {resp.status_code} ({flask.g.perf()}ms)')
-    return resp
+    evt = p.trigger_event(pl.AfterRequestHook(resp))
+    if evt.intercepted:
+        return evt.interception
+    return evt.response
 
 # endregion inject
 
@@ -353,14 +371,14 @@ def index():
             visit_total=total
         )
     # 加载系统卡片
-    main_card = render_template(
+    main_card: str = render_template(  # type: ignore
         'main.index.html',
         _dirname='cards',
         username=c.page.name,
-        status=d.status,
+        status=d.status_dict[1],
         last_updated=d.last_updated.strftime(f'%Y-%m-%d %H:%M:%S') + ' (UTC+8)'
     )
-    more_info_card = render_template(
+    more_info_card: str = render_template(  # type: ignore
         'more_info.index.html',
         _dirname='cards',
         more_text=more_text,
@@ -385,22 +403,27 @@ def index():
         cards[name] = value
 
     # 处理主页注入
-    inject = ''
+    injects: list[str] = []
     for i in p.index_injects:
         if hasattr(i, '__call__'):
-            inject += str(i()) + '\n'  # type: ignore
+            injects.append(str(i()))  # type: ignore
         else:
-            inject += str(i) + '\n'
+            injects.append(str(i))
+
+    evt = p.trigger_event(pl.IndexAccessEvent(page_title=c.page.title, page_desc=c.page.desc, page_favicon=c.page.favicon, page_background=c.page.background, cards=cards, injects=injects))
+
+    if evt.intercepted:
+        return evt.interception
 
     # 返回 html
     return render_template(
         'index.html',
-        page_title=c.page.title,
-        page_desc=c.page.desc,
-        page_favicon=c.page.favicon,
-        page_background=c.page.background,
-        cards=cards,
-        inject=inject
+        page_title=evt.page_title,
+        page_desc=evt.page_desc,
+        page_favicon=evt.page_favicon,
+        page_background=evt.page_background,
+        cards=evt.cards,
+        inject='\n'.join(evt.injects)
     ) or flask.abort(404)
 
 
@@ -409,10 +432,13 @@ def favicon():
     '''
     重定向 /favicon.ico 到用户自定义的 favicon
     '''
-    if c.page.favicon == '/favicon.ico':
+    evt = p.trigger_event(pl.FaviconAccessEvent(c.page.favicon))
+    if evt.intercepted:
+        return evt.interception
+    if evt.favicon_url == '/favicon.ico':
         return serve_public('favicon.ico')
     else:
-        return flask.redirect(c.page.favicon, 302)
+        return flask.redirect(evt.favicon_url, 302)
 
 
 @app.route('/'+'git'+'hub')
@@ -440,7 +466,7 @@ def metadata():
     '''
     获取站点元数据
     '''
-    return {
+    meta = {
         'success': True,
         'version': version,
         'version_str': version_str,
@@ -462,6 +488,22 @@ def metadata():
         },
         'metrics': c.metrics.enabled
     }
+    evt = p.trigger_event(pl.MetadataAccessEvent(meta))
+    if evt.intercepted:
+        return evt.interception
+    return evt.metadata
+
+
+@app.route('/api/metrics')
+def metrics():
+    '''
+    获取统计信息
+    - Method: **GET**
+    '''
+    evt = p.trigger_event(pl.MetricsAccessEvent(d.metrics_resp))
+    if evt.intercepted:
+        return evt.interception
+    return evt.metrics_response
 
 # endregion routes-special
 
@@ -471,7 +513,7 @@ def metadata():
 
 
 @app.route('/api/status/query')
-def query(version: str = '2'):
+def query():
     '''
     获取当前状态
     - 无需鉴权
@@ -490,40 +532,76 @@ def query(version: str = '2'):
         }
 
     # 返回数据
-    ver = flask.request.args.get('version', '2') if flask.request else version
-    if ver == '1':
-        # 旧版返回兼容 (本地时间字符串，但冗余字段多, 性能不佳)
-        # l.debug('[/query] Using legacy (version 1) response format')
-        device_list = d.device_list
-        for k in device_list:
-            device_list[k]['app_name'] = device_list[k].pop('status', '')
-            device_list[k].pop('fields', None)
-        return {
-            'time': datetime.now(pytz.timezone(c.main.timezone)).strftime('%Y-%m-%d %H:%M:%S'),
-            'timezone': c.main.timezone,
-            'success': True,
-            'status': st,
-            'info': stinfo,
-            'device': device_list,
-            'last_updated': d.last_updated.astimezone(pytz.timezone(c.main.timezone)).strftime('%Y-%m-%d %H:%M:%S'),
-            'refresh': c.status.refresh_interval,
-            'device_status_slice': c.status.device_slice
-        }
-    else:
-        # 新版返回 (时间戳)
-        ret = {
-            'success': True,
-            'time': datetime.now().timestamp(),
-            'status': stinfo,
-            'device': d.device_list,
-            'last_updated': d.last_updated.timestamp()
-        }
-        # 如同时包含 metadata / metrics 返回
-        if u.tobool(flask.request.args.get('meta', False)) if flask.request else False:
-            ret['meta'] = metadata()
-        if u.tobool(flask.request.args.get('metrics', False)) if flask.request else False:
-            ret['metrics'] = d.metrics_resp
-        return ret
+    ret = {
+        'success': True,
+        'time': datetime.now().timestamp(),
+        'status': stinfo,
+        'device': d.device_list,
+        'last_updated': d.last_updated.timestamp()
+    }
+    # 如同时包含 metadata / metrics 返回
+    if u.tobool(flask.request.args.get('meta', False)) if flask.request else False:
+        ret['meta'] = metadata()
+    if u.tobool(flask.request.args.get('metrics', False)) if flask.request else False:
+        ret['metrics'] = d.metrics_resp
+    evt = p.trigger_event(pl.QueryAccessEvent(ret))
+    return evt.query_response
+
+
+def _event_stream(event_id: int, ipstr: str):
+    last_updated = None
+    last_heartbeat = time.time()
+
+    l.info(f'[SSE] Event stream connected: {ipstr}')
+    while True:
+        current_time = time.time()
+        # 检查数据是否已更新
+        current_updated = d.last_updated
+
+        # 如果数据有更新, 发送更新事件并重置心跳计时器
+        if last_updated != current_updated:
+            last_updated = current_updated
+            # 重置心跳计时器
+            last_heartbeat = current_time
+
+            # 获取 /query 返回数据
+            update_data = json.dumps(query(), ensure_ascii=False)
+            event_id += 1
+            yield f'id: {event_id}\nevent: update\ndata: {update_data}\n\n'
+
+        # 只有在没有数据更新的情况下才检查是否需要发送心跳
+        elif current_time - last_heartbeat >= 30:
+            event_id += 1
+            yield f'id: {event_id}\nevent: heartbeat\ndata:\n\n'
+            last_heartbeat = current_time
+
+        time.sleep(1)  # 每秒检查一次更新
+
+
+@app.route('/api/status/events')
+def events():
+    '''
+    SSE 事件流，用于推送状态更新
+    - Method: **GET**
+    '''
+    try:
+        last_event_id = int(flask.request.headers.get('Last-Event-ID', '0'))
+    except ValueError:
+        raise u.APIUnsuccessful(400, 'Invaild Last-Event-ID header, it must be int!')
+
+    # evt = p.trigger_event(pl.StreamConnectedEvent(last_event_id))
+    # if evt.intercepted:
+    #     return evt.interception
+    ipstr: str = flask.g.ipstr
+
+    response = flask.Response(_event_stream(last_event_id, ipstr), mimetype='text/event-stream', status=200)
+    response.headers['Cache-Control'] = 'no-cache'  # 禁用缓存
+    response.headers['X-Accel-Buffering'] = 'no'  # 禁用 Nginx 缓冲
+    response.call_on_close(lambda: (
+        l.info(f'[SSE] Event stream disconnected: {ipstr}'),
+        p.trigger_event(pl.StreamDisconnectedEvent())
+    ))
+    return response
 
 
 @app.route('/api/status/set')
@@ -539,18 +617,25 @@ def set_status():
         status = int(status)
     except:
         raise u.APIUnsuccessful(400, 'argument \'status\' must be int')
-    old_status = d.status_id
 
-    evt = p.trigger_event(pl.StatusUpdatedEvent(old_status=old_status, new_status=status), flask.request)
+    if not status == d.status_id:
+        old_status = d.status
+        new_status = d.get_status(status)
+        evt = p.trigger_event(pl.StatusUpdatedEvent(
+            old_exists=old_status[0],
+            old_status=old_status[1],
+            new_exists=new_status[0],
+            new_status=new_status[1]
+        ))
+        if evt.intercepted:
+            return evt.interception
+        status = evt.new_status.id
 
-    if evt.intercepted:
-        return evt.interception
-    else:
-        d.status_id = evt.new_status
+        d.status_id = status
 
     return {
         'success': True,
-        'set_to': evt.new_status
+        'set_to': status
     }
 
 
@@ -561,21 +646,15 @@ def get_status_list():
     - 无需鉴权
     - Method: **GET**
     '''
+    evt = p.trigger_event(pl.StatuslistAccessEvent(c.status.status_list))
+    if evt.intercepted:
+        return evt.interception
     return {
         'success': True,
-        'status_list': [i.model_dump() for i in c.status.status_list]
+        'status_list': [i.model_dump() for i in evt.status_list]
     }
 
-
-@app.route('/api/metrics')
-def metrics():
-    '''
-    获取统计信息
-    - Method: **GET**
-    '''
-    return d.metrics_resp
-
-# endregion routes-ststus
+# endregion routes-status
 
 # ----- Device -----
 
@@ -592,28 +671,50 @@ def device_set():
     # 分 get / post 从 params / body 获取参数
     if flask.request.method == 'GET':
         args = dict(flask.request.args)
-        l.debug(f'args: {args}')
         device_id = args.pop('id', None)
         device_show_name = args.pop('show_name', None)
         device_using = u.tobool(args.pop('using', None))
         device_status = args.pop('status', None) or args.pop('app_name', None)  # 兼容旧版名称
         args.pop('secret', None)
-        d.device_set(
-            id=device_id,
+
+        evt = p.trigger_event(pl.DeviceSetEvent(
+            device_id=device_id,
             show_name=device_show_name,
             using=device_using,
             status=device_status,
             fields=args
+        ))
+        if evt.intercepted:
+            return evt.interception
+
+        d.device_set(
+            id=evt.device_id,
+            show_name=evt.show_name,
+            using=evt.using,
+            status=evt.status,
+            fields=evt.fields
         )
+
     elif flask.request.method == 'POST':
         try:
             req: dict = flask.request.get_json()
-            d.device_set(
-                id=req.get('id'),
+
+            evt = p.trigger_event(pl.DeviceSetEvent(
+                device_id=req.get('id'),
                 show_name=req.get('show_name'),
                 using=req.get('using'),
                 status=req.get('status') or req.get('app_name'),  # 兼容旧版名称
-                fields=req.get('fields') or {}  # type: ignore
+                fields=req.get('fields') or {}
+            ))
+            if evt.intercepted:
+                return evt.interception
+
+            d.device_set(
+                id=evt.device_id,
+                show_name=evt.show_name,
+                using=evt.using,
+                status=evt.status,
+                fields=evt.fields
             )
         except Exception as e:
             if isinstance(e, u.APIUnsuccessful):
@@ -622,9 +723,6 @@ def device_set():
                 raise u.APIUnsuccessful(400, f'missing param or wrong param type: {e}')
     else:
         raise u.APIUnsuccessful(405, '/api/device/set only supports GET and POST method!')
-
-    # 触发设备更新事件
-    # trigger_event('device_updated', device_id, d.data.device_status[device_id])
 
     return {
         'success': True
@@ -641,15 +739,33 @@ def device_remove():
     device_id = flask.request.args.get('id')
     if not device_id:
         raise u.APIUnsuccessful(400, 'Missing device id!')
-    # 保存设备信息用于事件触发
-    # device_info = d1.device_get(device_id)
 
-    d.device_remove(device_id)
+    device = d.device_get(device_id)
 
-    # 触发设备删除事件
-    # if device_info:
-    #     pass
-    # trigger_event('device_removed', device_id, device_info)
+    if device:
+        evt = p.trigger_event(pl.DeviceRemovedEvent(
+            exists=True,
+            device_id=device_id,
+            show_name=device.show_name,
+            using=device.using,
+            status=device.status,
+            fields=device.fields
+        ))
+    else:
+        evt = p.trigger_event(pl.DeviceRemovedEvent(
+            exists=False,
+            device_id=device_id,
+            show_name=None,
+            using=None,
+            status=None,
+            fields=None
+        ))
+
+    if evt.intercepted:
+        return evt.interception
+
+    d.device_remove(evt.device_id)
+
     return {
         'success': True
     }
@@ -662,13 +778,11 @@ def device_clear():
     清除所有设备状态
     - Method: **GET**
     '''
-    # 保存设备信息用于事件触发
-    # old_devices = d.data.device_status.copy()
+    evt = p.trigger_event(pl.DeviceClearedEvent(d._raw_device_list))
+    if evt.intercepted:
+        return evt.interception
 
     d.device_clear()
-
-    # 触发设备清除事件
-    # trigger_event('devices_cleared', old_devices)
 
     return {
         'success': True
@@ -685,68 +799,18 @@ def device_private_mode():
     private = u.tobool(flask.request.args.get('private'))
     if private == None:
         raise u.APIUnsuccessful(400, '\'private\' arg must be boolean')
-    # old_private_mode = d1.private_mode
-    else:
-        d.private_mode = private
+    elif not private == d.private_mode:
+        evt = p.trigger_event(pl.PrivateModeChangedEvent(d.private_mode, private))
+        if evt.intercepted:
+            return evt.interception
 
-    # 触发隐私模式切换事件
-    # trigger_event('private_mode_changed', old_private_mode, private)
+        d.private_mode = evt.new_status
 
     return {
         'success': True
     }
 
-
-@app.route('/api/status/events')
-def events():
-    '''
-    SSE 事件流，用于推送状态更新
-    - Method: **GET**
-    '''
-    try:
-        last_event_id = int(flask.request.headers.get('Last-Event-ID', '0'))
-    except ValueError:
-        raise u.APIUnsuccessful(400, 'Invaild Last-Event-ID header, it must be int!')
-
-    version = flask.request.args.get('version', '2') if flask.request else '2'
-    ip: str = flask.g.ipstr
-
-    def event_stream(event_id: int = last_event_id, version: str = version):
-        last_updated = None
-        last_heartbeat = time.time()
-
-        l.info(f'[SSE] Event stream connected: {ip}')
-        while True:
-            current_time = time.time()
-            # 检查数据是否已更新
-            current_updated = d.last_updated
-
-            # 如果数据有更新, 发送更新事件并重置心跳计时器
-            if last_updated != current_updated:
-                last_updated = current_updated
-                # 重置心跳计时器
-                last_heartbeat = current_time
-
-                # 获取 /query 返回数据
-                update_data = json.dumps(query(version=version), ensure_ascii=False)
-                event_id += 1
-                yield f'id: {event_id}\nevent: update\ndata: {update_data}\n\n'
-
-            # 只有在没有数据更新的情况下才检查是否需要发送心跳
-            elif current_time - last_heartbeat >= 30:
-                event_id += 1
-                yield f'id: {event_id}\nevent: heartbeat\ndata:\n\n'
-                last_heartbeat = current_time
-
-            time.sleep(1)  # 每秒检查一次更新
-
-    response = flask.Response(event_stream(last_event_id), mimetype='text/event-stream', status=200)
-    response.headers['Cache-Control'] = 'no-cache'  # 禁用缓存
-    response.headers['X-Accel-Buffering'] = 'no'  # 禁用 Nginx 缓冲
-    response.call_on_close(lambda: l.info(f'[SSE] Event stream disconnected: {ip}'))
-    return response
-
-# endregion routes-status
+# endregion routes-device
 
 # ----- Panel (Admin) -----
 
@@ -781,12 +845,10 @@ def admin_panel():
     return render_template(
         'panel.html',
         c=c,
-        # d=d1.data, TODO: admin card
         current_theme=flask.g.theme,
         available_themes=u.themes_available(),
         cards=cards,
         inject=inject
-        # plugin_admin_cards=rendered_cards
     ) or flask.abort(404)
 
 
@@ -873,10 +935,6 @@ def verify_secret():
 #             steam_refresh_interval=c.util.steam_refresh_interval
 #         )
 
-# ----- Public -----
-
-# region routes-public
-
 
 @app.route('/<path:path_name>')
 def serve_public(path_name: str):
@@ -887,16 +945,16 @@ def serve_public(path_name: str):
     file = d.get_cached_file('data/public', path_name) or d.get_cached_file('public', path_name)
     if file:
         mime = guess_type(path_name)[0] or 'text/plain'
-        resp = flask.send_file(file, mimetype=mime)
-    return resp
-
-# endregion routes-public
+        return flask.send_file(file, mimetype=mime)
+    else:
+        return flask.abort(404)
 
 # endregion routes
 
 # ========== End ==========
 
 # region end
+
 
 p.trigger_event(pl.AppStartedEvent())
 

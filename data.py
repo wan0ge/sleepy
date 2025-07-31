@@ -18,7 +18,7 @@ import pytz
 import schedule
 
 import utils as u
-from models import ConfigModel
+from models import ConfigModel, _StatusItemModel
 
 l = getLogger(__name__)
 
@@ -179,8 +179,31 @@ class Data:
         except SQLAlchemyError as e:
             self._throw(e)
 
+    def get_status(self, status_id: int) -> tuple[bool, _StatusItemModel]:
+        '''
+        用 id 获取状态
+        '''
+        try:
+            return True, self._c.status.status_list[status_id]
+        except IndexError:
+            return False, _StatusItemModel(
+                id=self.status_id,
+                name='Unknown',
+                desc='未知的标识符，可能是配置问题。',
+                color='error'
+            )
+        except SQLAlchemyError as e:
+            self._throw(e)
+
     @property
-    def status(self) -> dict[str, int | str]:
+    def status(self) -> tuple[bool, _StatusItemModel]:
+        '''
+        获取当前状态
+        '''
+        return self.get_status(self.status_id)
+
+    @property
+    def status_dict(self) -> tuple[bool, dict[str, int | str]]:
         '''
         获取当前状态
         ```
@@ -191,19 +214,8 @@ class Data:
             'color': str
         }
         '''
-        try:
-            model = self._c.status.status_list[self.status_id]
-            if model:
-                return model.model_dump()
-            else:
-                return {
-                    'id': self.status_id,
-                    'name': 'Unknown',
-                    'desc': '未知的标识符，可能是配置问题。',
-                    'color': 'error'
-                }
-        except SQLAlchemyError as e:
-            self._throw(e)
+        status = self.status
+        return status[0], to_primitive(self.status[1])  # type: ignore
 
     @property
     def private_mode(self) -> bool:
@@ -252,7 +264,7 @@ class Data:
     # --- 设备状态接口
 
     @property
-    def _raw_device_list(self) -> dict[str, dict[str, str | int | float | bool]]:
+    def _raw_device_list(self) -> dict[str, _DeviceStatusData]:
         '''
         原始设备列表 (未排序)
         '''
@@ -262,12 +274,16 @@ class Data:
                 return {}
             with self._app.app_context():
                 devices: list[_DeviceStatusData] = _DeviceStatusData.query.all().copy()
-                for d in devices:
-                    d.last_updated = d.last_updated.timestamp()  # type: ignore
-                ret = to_primitive({d.id: d for d in devices}, format_date_time=False)
-                return ret  # type: ignore
+                return {d.id: d for d in devices}
         except SQLAlchemyError as e:
             self._throw(e)
+
+    @property
+    def _raw_device_list_dict(self) -> dict[str, dict[str, str | int | float | bool]]:
+        devices = self._raw_device_list
+        for d in devices.values():
+            d.last_updated = d.last_updated.timestamp()  # type: ignore
+        return to_primitive(devices, format_date_time=False)  # type: ignore
 
     @property
     def device_list(self) -> dict[str, dict[str, Any]]:
@@ -283,7 +299,7 @@ class Data:
                 devicelst = {}  # devicelst = device_using
                 device_not_using = {}
                 device_unknown = {}
-                for k, v in self._raw_device_list.items():
+                for k, v in self._raw_device_list_dict.items():
                     if v.get('using') == True:  # * 正在使用
                         devicelst[k] = v
                     elif v.get('using') == False:  # * 未在使用
@@ -301,7 +317,7 @@ class Data:
                 devicelst.update(device_unknown)
             else:
                 # 正常获取
-                devicelst = self._raw_device_list
+                devicelst = self._raw_device_list_dict
                 # 如锁定了未在使用时状态名, 则替换
                 if self._c.status.not_using:
                     for d in devicelst.keys():
@@ -313,7 +329,7 @@ class Data:
         except SQLAlchemyError as e:
             self._throw(e)
 
-    def device_get(self, id: str) -> dict[str, str | int | float | bool] | None:
+    def device_get(self, id: str) -> _DeviceStatusData | None:
         '''
         获取指定设备状态
 
@@ -322,10 +338,7 @@ class Data:
         try:
             with self._app.app_context():
                 device: _DeviceStatusData | None = _DeviceStatusData.query.filter_by(id=id).first()
-                if device:
-                    return to_primitive(device)  # type: ignore
-                else:
-                    return None
+                return device
         except SQLAlchemyError as e:
             self._throw(e)
 

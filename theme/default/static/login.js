@@ -51,8 +51,8 @@ async function login() {
 // 验证 cookie 是否有效
 async function validateCookie() {
     try {
-        // 使用 /verify-secret 验证 cookie 是否有效
-        const response = await fetch('/verify-secret', {
+        // 使用 /panel/verify 验证 cookie 是否有效
+        const response = await fetch('/panel/verify', {
             method: 'GET',
             credentials: 'include', // 包含 cookie
             cache: 'no-cache' // 禁用缓存
