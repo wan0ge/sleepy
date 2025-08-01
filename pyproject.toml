@@ -8,6 +8,8 @@ requires-python = ">=3.10"
 dependencies = [
     # Web server
     "flask>=3.1.1",
+    "flask-cors>=6.0.1",
+    "pyopenssl>=25.1.0",
     # Config parsing
     "pyyaml>=6.0.2",
     "toml>=0.10.2",
@@ -16,7 +18,7 @@ dependencies = [
     # Data storing
     "flask-sqlalchemy>=3.1.1",
     "objtyping>=0.5.4",
-    # Timezone
+    # Timezone parsing
     "pytz>=2025.2",
     # Colorful log
     "colorama>=0.4.6",
@@ -33,4 +35,4 @@ issues = "https://github.com/sleepy-project/sleepy/issues"
 
 [tool.sleepy-plugin]
 version = [5, 0, 0]
-version-str = "5.0-dev-20250724"
+version-str = "5.0-dev-20250801"

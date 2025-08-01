@@ -116,6 +116,31 @@ class _MainConfigModel(BaseModel):
     - *建议设置为 20 分钟 (1200s)*
     '''
 
+    cors_origins: list[str] | str = '*'
+    '''
+    `main.cors_origins`
+    允许跨域请求的域名
+    - *默认为 `*` (允许所有域名)*
+    '''
+
+    https: bool = False
+    '''
+    `main.https`
+    是否启用 https
+    '''
+
+    ssl_cert: str = 'data/cert.pem'
+    '''
+    `main.ssl_cert`
+    ssl 证书路径
+    '''
+
+    ssl_key: str = 'data/key.pem'
+    '''
+    `main.ssl_key`
+    ssl 密钥路径
+    '''
+
 
 class _PageConfigModel(BaseModel):
     '''

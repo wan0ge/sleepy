@@ -27,7 +27,7 @@ try:
 
     # 3rd-party
     import flask
-    import pytz
+    from flask_cors import cross_origin
     from markupsafe import escape
     from werkzeug.exceptions import NotFound, HTTPException
     from toml import load as load_toml
@@ -228,7 +228,7 @@ def api_unsuccessful_handler(e: u.APIUnsuccessful):
     '''
     l.error(f'API Calling Error: {e}')
     evt = p.trigger_event(pl.APIUnsuccessfulEvent(e))
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
     return {
         'success': False,
@@ -238,23 +238,23 @@ def api_unsuccessful_handler(e: u.APIUnsuccessful):
     }, evt.error.code
 
 
-# @app.errorhandler(Exception)
-# def error_handler(e: Exception):
-#     '''
-#     处理未捕获运行时错误
-#     '''
-#     if isinstance(e, HTTPException):
-#         l.warning(f'HTTP Error: {e}')
-#         evt = p.trigger_event(pl.HTTPErrorEvent(e))
-#         if evt.intercepted:
-#             return evt.interception
-#         return evt.error
-#     else:
-#         l.error(f'Unhandled Error: {e}\n{format_exc()}')
-#         evt = p.trigger_event(pl.UnhandledErrorEvent(e))
-#         if evt.intercepted:
-#             return evt.interception
-#         return f'Unhandled Error: {evt.error}'
+@app.errorhandler(Exception)
+def error_handler(e: Exception):
+    '''
+    处理未捕获运行时错误
+    '''
+    if isinstance(e, HTTPException):
+        l.warning(f'HTTP Error: {e}')
+        evt = p.trigger_event(pl.HTTPErrorEvent(e))
+        if evt.interception:
+            return evt.interception
+        return evt.error
+    else:
+        l.error(f'Unhandled Error: {e}\n{format_exc()}')
+        evt = p.trigger_event(pl.UnhandledErrorEvent(e))
+        if evt.interception:
+            return evt.interception
+        return f'Unhandled Error: {evt.error}'
 
 # endregion errorhandler
 
@@ -321,7 +321,7 @@ def before_request():
     flask.g.secret = c.main.secret
 
     evt = p.trigger_event(pl.BeforeRequestHook())
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
 
 
@@ -339,9 +339,10 @@ def after_request(resp: flask.Response):
     # --- access log
     l.info(f'[Request] {flask.g.ipstr} | {path} -> {resp.status_code} ({flask.g.perf()}ms)')
     evt = p.trigger_event(pl.AfterRequestHook(resp))
-    if evt.intercepted:
-        return evt.interception
-    evt.response.headers.add('Sleepy-Version', f'{version_str} ({version})')
+    if evt.interception:
+        evt.response = flask.Response(evt.interception[0], evt.interception[1])
+    evt.response.headers.add('X-Powered-By', 'Sleepy-Project (https://github.com/sleepy-project)')
+    evt.response.headers.add('Sleepy-Version', f'{version_str} ({".".join(str(i) for i in version)})')
     return evt.response
 
 # endregion inject
@@ -414,7 +415,7 @@ def index():
 
     evt = p.trigger_event(pl.IndexAccessEvent(page_title=c.page.title, page_desc=c.page.desc, page_favicon=c.page.favicon, page_background=c.page.background, cards=cards, injects=injects))
 
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
 
     # 返回 html
@@ -435,7 +436,7 @@ def favicon():
     重定向 /favicon.ico 到用户自定义的 favicon
     '''
     evt = p.trigger_event(pl.FaviconAccessEvent(c.page.favicon))
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
     if evt.favicon_url == '/favicon.ico':
         return serve_public('favicon.ico')
@@ -464,6 +465,7 @@ def none():
 
 
 @app.route('/api/meta')
+@cross_origin(c.main.cors_origins)
 def metadata():
     '''
     获取站点元数据
@@ -491,19 +493,20 @@ def metadata():
         'metrics': c.metrics.enabled
     }
     evt = p.trigger_event(pl.MetadataAccessEvent(meta))
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
     return evt.metadata
 
 
 @app.route('/api/metrics')
+@cross_origin(c.main.cors_origins)
 def metrics():
     '''
     获取统计信息
     - Method: **GET**
     '''
     evt = p.trigger_event(pl.MetricsAccessEvent(d.metrics_resp))
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
     return evt.metrics_response
 
@@ -515,6 +518,7 @@ def metrics():
 
 
 @app.route('/api/status/query')
+@cross_origin(c.main.cors_origins)
 def query():
     '''
     获取当前状态
@@ -581,6 +585,7 @@ def _event_stream(event_id: int, ipstr: str):
 
 
 @app.route('/api/status/events')
+@cross_origin(c.main.cors_origins)
 def events():
     '''
     SSE 事件流，用于推送状态更新
@@ -591,9 +596,9 @@ def events():
     except ValueError:
         raise u.APIUnsuccessful(400, 'Invaild Last-Event-ID header, it must be int!')
 
-    # evt = p.trigger_event(pl.StreamConnectedEvent(last_event_id))
-    # if evt.intercepted:
-    #     return evt.interception
+    evt = p.trigger_event(pl.StreamConnectedEvent(last_event_id))
+    if evt.interception:
+        return evt.interception
     ipstr: str = flask.g.ipstr
 
     response = flask.Response(_event_stream(last_event_id, ipstr), mimetype='text/event-stream', status=200)
@@ -607,6 +612,7 @@ def events():
 
 
 @app.route('/api/status/set')
+@cross_origin(c.main.cors_origins)
 @u.require_secret()
 def set_status():
     '''
@@ -629,7 +635,7 @@ def set_status():
             new_exists=new_status[0],
             new_status=new_status[1]
         ))
-        if evt.intercepted:
+        if evt.interception:
             return evt.interception
         status = evt.new_status.id
 
@@ -642,6 +648,7 @@ def set_status():
 
 
 @app.route('/api/status/list')
+@cross_origin(c.main.cors_origins)
 def get_status_list():
     '''
     获取 `status_list`
@@ -649,7 +656,7 @@ def get_status_list():
     - Method: **GET**
     '''
     evt = p.trigger_event(pl.StatuslistAccessEvent(c.status.status_list))
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
     return {
         'success': True,
@@ -664,6 +671,7 @@ def get_status_list():
 
 
 @app.route('/api/device/set', methods=['GET', 'POST'])
+@cross_origin(c.main.cors_origins)
 @u.require_secret()
 def device_set():
     '''
@@ -686,7 +694,7 @@ def device_set():
             status=device_status,
             fields=args
         ))
-        if evt.intercepted:
+        if evt.interception:
             return evt.interception
 
         d.device_set(
@@ -708,7 +716,7 @@ def device_set():
                 status=req.get('status') or req.get('app_name'),  # 兼容旧版名称
                 fields=req.get('fields') or {}
             ))
-            if evt.intercepted:
+            if evt.interception:
                 return evt.interception
 
             d.device_set(
@@ -732,6 +740,7 @@ def device_set():
 
 
 @app.route('/api/device/remove')
+@cross_origin(c.main.cors_origins)
 @u.require_secret()
 def device_remove():
     '''
@@ -763,7 +772,7 @@ def device_remove():
             fields=None
         ))
 
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
 
     d.device_remove(evt.device_id)
@@ -774,6 +783,7 @@ def device_remove():
 
 
 @app.route('/api/device/clear')
+@cross_origin(c.main.cors_origins)
 @u.require_secret()
 def device_clear():
     '''
@@ -781,7 +791,7 @@ def device_clear():
     - Method: **GET**
     '''
     evt = p.trigger_event(pl.DeviceClearedEvent(d._raw_device_list))
-    if evt.intercepted:
+    if evt.interception:
         return evt.interception
 
     d.device_clear()
@@ -793,6 +803,7 @@ def device_clear():
 
 @app.route('/api/device/private')
 @u.require_secret()
+@cross_origin(c.main.cors_origins)
 def device_private_mode():
     '''
     隐私模式, 即不在返回中显示设备状态 (仍可正常更新)
@@ -803,7 +814,7 @@ def device_private_mode():
         raise u.APIUnsuccessful(400, '\'private\' arg must be boolean')
     elif not private == d.private_mode:
         evt = p.trigger_event(pl.PrivateModeChangedEvent(d.private_mode, private))
-        if evt.intercepted:
+        if evt.interception:
             return evt.interception
 
         d.private_mode = evt.new_status
@@ -912,6 +923,7 @@ def logout():
 
 
 @app.route('/panel/verify', methods=['GET', 'POST'])
+@cross_origin(c.main.cors_origins)
 @u.require_secret()
 def verify_secret():
     '''
@@ -955,21 +967,29 @@ def serve_public(path_name: str):
 
 # ========== End ==========
 
-# region end
+# region run
 
 
 p.trigger_event(pl.AppStartedEvent())
 
 if __name__ == '__main__':
     l.info(f'Hi {c.page.name}!')
-    l.info(f'Listening service on: {f"[{c.main.host}]" if ":" in c.main.host else c.main.host}:{c.main.port}{" (debug enabled)" if c.main.debug else ""}')
+    listening = f'{f"[{c.main.host}]" if ":" in c.main.host else c.main.host}:{c.main.port}'
+    if c.main.https:
+        ssl_context = (c.main.ssl_cert, c.main.ssl_key)
+        l.info(f'Using SSL: {c.main.ssl_cert} / {c.main.ssl_key}')
+        l.info(f'Listening service on: https://{listening}{" (debug enabled)" if c.main.debug else ""}')
+    else:
+        ssl_context = None
+        l.info(f'Listening service on: http://{listening}{" (debug enabled)" if c.main.debug else ""}')
     try:
         app.run(  # 启↗动↘
             host=c.main.host,
             port=c.main.port,  # type: ignore
             debug=c.main.debug,
             use_reloader=False,
-            threaded=True
+            threaded=True,
+            ssl_context=ssl_context
         )
     except Exception as e:
         l.critical(f'Critical error when running server: {e}\n{format_exc()}')
@@ -981,4 +1001,4 @@ if __name__ == '__main__':
         l.info('Bye.')
         exit(0)
 
-# endregion end
+# endregion run

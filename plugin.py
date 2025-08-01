@@ -32,23 +32,23 @@ class BaseEvent:
     interceptable: bool = True
     '''事件是否可拦截'''
 
-    intercepted: bool = False
-    '''事件是否被拦截'''
-    interception: t.Any = None
-    '''拦截后返回结果'''
+    interception: tuple[t.Any, int] | None = None
+    '''拦截后返回结果 (如被拦截)'''
     request: flask.Request | None = flask.request if flask.request else None
     '''触发事件的请求 (如有)'''
 
     def __init__(self):
         pass
 
-    def intercept(self, response: t.Any):
+    def intercept(self, response: t.Any, code: int = 200):
         '''
         中断事件, 并提前返回 (如果可中断)
+
+        :param response: 中断后返回的内容
+        :param code: 中断后返回的 HTTP 状态码
         '''
         if self.interceptable:
-            self.intercepted = True
-            self.interception = response
+            self.interception = response, code
 
 # region events-run
 
