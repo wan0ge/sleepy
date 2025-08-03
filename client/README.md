@@ -16,6 +16,7 @@
 
 **MacOS**:
   - [AppleShortcuts](#AppleShortcuts)
+  - [AppleScript](#AppleScript)
 
 **CLI** (命令行):
   - [HomeworkDevice](#HomeworkDevice)
@@ -83,6 +84,9 @@
   - [AppleShortcuts](#appleshortcuts)
     - [FullVer](#fullver)
     - [FastVer](#fastver)
+  - [AppleScript](#AppleScript)
+    - [mac_device_sleepy_AS](#mac_device_sleepy_AS)
+    - [mac_device_sleepy_AS_false](#mac_device_sleepy_AS_false)
   - [Zhixuewang](#zhixuewang)
     - [配置](#配置-12)
     - [使用](#使用-10)
@@ -359,6 +363,14 @@ https://github.com/sleepy-project/sleepy/blob/7fc21380a259247533db76f3a0443fa550
 
 > [!TIP]
 > 你可以将该快捷指令设置为操作按钮、控制中心按钮、锁定屏幕按钮、敲击 2 / 3 下背板指令来快捷使用
+
+## [AppleScript](ing)
+
+> by: [@wan0ge](https://github.com/wan0ge) & AI
+
+### mac_device_sleepy_AS
+
+### mac_device_sleepy_AS_false
 
 # CLI
 
