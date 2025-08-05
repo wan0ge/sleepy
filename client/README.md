@@ -63,7 +63,7 @@
   - [CmdConsoleMulti](#cmdconsolemulti)
     - [配置](#配置-6)
     - [使用](#使用-4)
-- [IOS/MacOS](#IOS/MacOS)
+- [IOSMacOS](#iosmacos)
   - [AppleShortcuts](#appleshortcuts)
     - [FullVer](#fullver)
     - [FastVer](#fastver)
