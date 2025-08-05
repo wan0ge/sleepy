@@ -367,8 +367,10 @@ https://github.com/sleepy-project/sleepy/blob/7fc21380a259247533db76f3a0443fa550
 > [!TIP]
 > 你可以将该快捷指令设置为操作按钮、控制中心按钮、锁定屏幕按钮、敲击 2 / 3 下背板指令来快捷使用
 
-## [AppleScript](https://github.com/sleepy-project/sleepy/blob/main/client/mac_device_sleepy_AS.zip)(支持macOS 10.9+)
+## [AppleScript](https://github.com/sleepy-project/sleepy/blob/main/client/mac_device_sleepy_AS.zip)
 
+> 支持macOS 10.9+
+> 
 > by: [@wan0ge](https://github.com/wan0ge) & AI
 
 ### [mac_device_sleepy_AS](https://github.com/sleepy-project/sleepy/blob/main/client/mac_device_sleepy_AS.zip)
