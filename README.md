@@ -44,7 +44,7 @@
 
 搭建完服务端后，你可在 **[`/client`](./client/README.md)** 找到客户端 (用于**手动更新状态**/**自动更新设备打开应用**)
 
-*目前已有 [Windows](./client/README.md#windevice), [Linux](./client/README.md#linux), [MacOS / IOS](./client/README.md#appleshortcuts), [Android](./client/README.md#autoxjsscript), [油猴脚本](./client/README.md#browserscript) 等客户端*
+*目前已有 [Windows](./client/README.md#windevice), [Linux](./client/README.md#linux), [IOS / MacOS](./client/README.md#iosmacos), [Android](./client/README.md#autoxjsscript), [油猴脚本](./client/README.md#browserscript) 等客户端*
 
 ## API
 
